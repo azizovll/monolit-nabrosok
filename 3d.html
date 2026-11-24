@@ -117,6 +117,32 @@ header .in{display:flex;align-items:center;justify-content:space-between;gap:16p
 .disc{font-size:13px;color:var(--mute);margin:14px 0 0}
 .panel .note{margin-top:16px}
 
+/* анимации */
+.ch{transition:border-color .15s,transform .15s,box-shadow .2s}
+.ch:active{transform:scale(.96)}
+.ch i{transition:transform .4s cubic-bezier(.2,.7,.2,1)}
+.ch:hover i{transform:scale(1.05)}
+.vbtn{transition:background .2s,color .2s,transform .15s}
+.vbtn:active{transform:scale(.95)}
+.btn-brand{position:relative;overflow:hidden;isolation:isolate}
+.btn-brand::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);z-index:-1;pointer-events:none;opacity:0}
+#sTotal{display:inline-block;font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:no-preference){
+  .panel > *{animation:up .8s cubic-bezier(.2,.7,.2,1) both}
+  .panel > :nth-child(2){animation-delay:.06s}.panel > :nth-child(3){animation-delay:.12s}.panel > :nth-child(4){animation-delay:.18s}
+  .panel > :nth-child(5){animation-delay:.24s}.panel > :nth-child(6){animation-delay:.3s}.panel > :nth-child(7){animation-delay:.36s}
+  .panel > :nth-child(8){animation-delay:.42s}.panel > :nth-child(n+9){animation-delay:.48s}
+  @keyframes up{from{opacity:0;transform:translateY(24px)}}
+  .views,.cur{animation:up .7s .5s cubic-bezier(.2,.7,.2,1) both}
+  .cur.pop{animation:pop .45s ease}
+  @keyframes pop{40%{transform:scale(1.05)}}
+  #sTotal.pop{animation:popc .4s ease}
+  @keyframes popc{40%{transform:scale(1.07);color:#ffb4b4}}
+  .btn-brand:hover::after{opacity:1;animation:shine .8s ease}
+  @keyframes shine{from{left:-60%}to{left:130%}}
+  .mbar{animation:mbar .6s 1s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes mbar{from{transform:translateY(110%)}}
+}
 .mbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:none;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
 .mbar .btn{flex:1;padding:15px 10px;font-size:15px}
 @media(max-width:700px){.mbar{display:flex}}
@@ -557,6 +583,25 @@ function buildWorld(){
 
 /* камера */
 let tween=null, dirty=true;
+const REDUCE=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ANIMS=[];
+let CLOCK=0, lastFrame=0; // часы анимаций: за кадр не больше 50 мс, чтобы подвисания не съедали анимацию
+function anim(dur,delay,fn){ if(REDUCE){ fn(1); return; } fn(0); ANIMS.push({t0:CLOCK+delay,dur,fn}); }
+const easeOut=k=>1-Math.pow(1-k,3);
+const backOut=k=>{ const c=1.6; return 1+(c+1)*Math.pow(k-1,3)+c*Math.pow(k-1,2); };
+function animateBuild(){
+  // дома и постройки растут из земли, деревья и кусты появляются, машина опускается
+  let i=0;
+  world.children.forEach(o=>{
+    if(o.isInstancedMesh||o===kayMesh) return;
+    if(o.isMesh&&o.position.lengthSq()===0) return; // мощение, бордюр, забор: стоят на месте
+    const big=o.isGroup&&o.children.length>12, d=200+i*70; i++;
+    if(big){ anim(900,d,k=>{ o.scale.y=Math.max(.001,backOut(k)); }); }
+    else if(o.isGroup&&o.position.y===0&&o.children.some(c=>c.geometry?.type==='CylinderGeometry'&&c.children.length===0&&Math.abs(c.position.y-.34)<.01)){ anim(800,d+300,k=>{ o.position.y=(1-easeOut(k))*3; }); }
+    else if(o.isGroup||o.isMesh){ const s0=o.scale.clone(); anim(650,d,k=>{ const e=Math.max(.001,backOut(k)); o.scale.set(s0.x*e,s0.y*e,s0.z*e); }); }
+  });
+}
+function flashPaving(){ anim(500,0,k=>{ const v=.55+.45*easeOut(k); pave.color.setRGB(v,v,v); kay.color.setRGB(v,v,v); }); }
 function view(v,instant){
   const P=PRESETS[st.dom]; let pos,tg;
   if(v==='top'){ tg=new THREE.Vector3(...P.cam.all[1]); pos=tg.clone().add(new THREE.Vector3(0,30,.01)); }
@@ -564,15 +609,17 @@ function view(v,instant){
   if(v==='all'&&camera.aspect<1) pos=tg.clone().add(new THREE.Vector3(4,13.5,14.5)); // телефон: смотрим со стороны улицы
   document.querySelectorAll('.vbtn').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   if(instant){ camera.position.copy(pos); controls.target.copy(tg); dirty=true; return; }
-  tween={t0:performance.now(),p0:camera.position.clone(),g0:controls.target.clone(),p1:pos,g1:tg};
+  tween={t0:CLOCK,p0:camera.position.clone(),g0:controls.target.clone(),p1:pos,g1:tg};
 }
 function resize(){ const w=viewer.clientWidth,h=viewer.clientHeight; if(!w||!h) return; renderer.setSize(w,h,false); camera.aspect=w/h; camera.fov=w/h<1?55:42; camera.updateProjectionMatrix(); dirty=true; }
 new ResizeObserver(resize).observe(viewer);
 
 let first=true;
-renderer.setAnimationLoop(now=>{
-  if(tween){ const k=Math.min(1,(now-tween.t0)/850), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+renderer.setAnimationLoop(t=>{
+  CLOCK+=lastFrame?Math.min(50,t-lastFrame):0; lastFrame=t; const now=CLOCK;
+  if(tween){ const k=Math.min(1,Math.max(0,(now-tween.t0)/(tween.dur||850))), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
     camera.position.lerpVectors(tween.p0,tween.p1,e); controls.target.lerpVectors(tween.g0,tween.g1,e); if(k>=1) tween=null; dirty=true; }
+  if(ANIMS.length){ for(let i=ANIMS.length-1;i>=0;i--){ const a=ANIMS[i], k=Math.min(1,Math.max(0,(now-a.t0)/a.dur)); a.fn(k); if(k>=1) ANIMS.splice(i,1); } renderer.shadowMap.needsUpdate=true; dirty=true; }
   if(controls.update()||dirty){ renderer.render(scene,camera); dirty=false;
     if(first){ first=false; $('loader').classList.add('off'); setTimeout(()=>$('hint').classList.add('off'),3500); } }
 });
@@ -582,17 +629,28 @@ controls.addEventListener('start',()=>{ stopAuto(); tween=null; document.querySe
 /* ---------- интерфейс ---------- */
 function choice(el,cls,html,on,fn){ const b=document.createElement('button'); b.type='button'; b.className='ch '+cls+(on?' on':''); b.innerHTML=html; b.onclick=()=>{ el.querySelectorAll('.ch').forEach(x=>x.classList.remove('on')); b.classList.add('on'); fn(); }; el.appendChild(b); return b; }
 
-Object.entries(PRESETS).forEach(([k,p])=>choice($('houses'),'house',ICONS[k]+p.name+'<small>'+p.sub+'</small>',st.dom===k,()=>{ st.dom=k; buildWorld(); view('all'); refresh(); }));
-Object.entries(COLORS).forEach(([k,c])=>choice($('colors'),'sw',`<i style="background-image:url(${thumb('perevyazka',c.pal,120,60)})"></i>${c.name}<small>${fmt(c.price)} ₽/м²</small>`,st.cvet===k,()=>{ st.cvet=k; updatePaving(); drawPatterns(); refresh(); }));
+Object.entries(PRESETS).forEach(([k,p])=>choice($('houses'),'house',ICONS[k]+p.name+'<small>'+p.sub+'</small>',st.dom===k,()=>{ st.dom=k; buildWorld(); animateBuild(); view('all'); refresh(); }));
+Object.entries(COLORS).forEach(([k,c])=>choice($('colors'),'sw',`<i style="background-image:url(${thumb('perevyazka',c.pal,120,60)})"></i>${c.name}<small>${fmt(c.price)} ₽/м²</small>`,st.cvet===k,()=>{ st.cvet=k; updatePaving(); flashPaving(); drawPatterns(); refresh(); }));
 function drawPatterns(){
   const el=$('patterns'); el.innerHTML='';
-  Object.entries(PATTERNS).forEach(([k,p])=>choice(el,'pt',`<i style="background-image:url(${thumb(k==='elka45'?'elka':k,COLORS[st.cvet].pal,90,90,p.rot)})"></i>${p.name}`,st.ukl===k,()=>{ st.ukl=k; updatePaving(); refresh(); }));
+  Object.entries(PATTERNS).forEach(([k,p])=>choice(el,'pt',`<i style="background-image:url(${thumb(k==='elka45'?'elka':k,COLORS[st.cvet].pal,90,90,p.rot)})"></i>${p.name}`,st.ukl===k,()=>{ st.ukl=k; updatePaving(); flashPaving(); refresh(); }));
 }
 drawPatterns();
 choice($('kayma'),'none','Без каймы',!st.kayma,()=>{ st.kayma=''; buildKayma(); refresh(); });
-Object.entries(COLORS).forEach(([k,c])=>choice($('kayma'),'',`<i style="background-image:url(${thumb('perevyazka',c.pal,52,52)})"></i>${c.name}`,st.kayma===k,()=>{ st.kayma=k; updatePaving(); buildKayma(); refresh(); }));
+Object.entries(COLORS).forEach(([k,c])=>choice($('kayma'),'',`<i style="background-image:url(${thumb('perevyazka',c.pal,52,52)})"></i>${c.name}`,st.kayma===k,()=>{ st.kayma=k; updatePaving(); buildKayma(); flashPaving(); refresh(); }));
 $('views').addEventListener('click',e=>{ const b=e.target.closest('.vbtn'); if(!b) return; stopAuto(); view(b.dataset.v); });
 
+let shownTotal=null, totalRaf=0;
+function setTotal(v){
+  const el=$('sTotal'); cancelAnimationFrame(totalRaf);
+  if(shownTotal===null||REDUCE){ shownTotal=v; el.textContent='≈ '+fmt(v)+' ₽'; return; }
+  if(v===shownTotal) return;
+  const from=shownTotal, t0=performance.now();
+  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+  const step=t=>{ const k=Math.min(1,(t-t0)/500); shownTotal=k<1?Math.round((from+(v-from)*easeOut(k))/100)*100:v; el.textContent='≈ '+fmt(shownTotal)+' ₽'; if(k<1) totalRaf=requestAnimationFrame(step); };
+  totalRaf=requestAnimationFrame(step);
+}
+let lastCur='';
 function refresh(){
   const C=COLORS[st.cvet], K=st.kayma?COLORS[st.kayma]:null;
   let cells=0; for(let i=0;i<grid.length;i++) cells+=grid[i];
@@ -602,9 +660,10 @@ function refresh(){
   $('sArea').textContent=Math.round(area)+' м²';
   $('sMainL').textContent=`«${C.name}», ${Math.round(main)} м²`; $('sMain').textContent=fmt(mSum)+' ₽';
   $('sKRow').hidden=!K; if(K){ $('sKL').textContent=`Кайма «${K.name}», ${Math.round(kArea)} м²`; $('sK').textContent=fmt(kSum)+' ₽'; }
-  $('sTotal').textContent='≈ '+fmt(mSum+kSum)+' ₽';
+  setTotal(mSum+kSum);
   $('colorName').textContent=C.name+' · '+fmt(C.price)+' ₽/м²';
-  $('cur').innerHTML=`<b>«Кирпич» ${C.name.toLowerCase()}</b><span>${PATTERNS[st.ukl].short}${K?', кайма '+K.name.toLowerCase():''}</span>`;
+  const curHtml=`<b>«Кирпич» ${C.name.toLowerCase()}</b><span>${PATTERNS[st.ukl].short}${K?', кайма '+K.name.toLowerCase():''}</span>`;
+  if(curHtml!==lastCur){ const el=$('cur'); el.innerHTML=curHtml; if(lastCur){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } lastCur=curHtml; }
   const a=Math.max(5,Math.min(400,Math.round(area/5)*5)), href='./?area='+a+'#raschet';
   $('toCalc').href=href; $('toCalcM').href=href;
   try{ history.replaceState(null,'','#dom='+st.dom+'&cvet='+st.cvet+'&ukl='+st.ukl+(st.kayma?'&kayma='+st.kayma:'')); }catch(e){}
@@ -616,6 +675,12 @@ buildWorld();
 resize();
 view('all',true);
 refresh();
+if(!REDUCE){
+  const endPos=camera.position.clone(), tg=controls.target.clone();
+  camera.position.copy(tg.clone().add(endPos.clone().sub(tg).multiplyScalar(2.1)).add(new THREE.Vector3(0,10,0)));
+  tween={t0:CLOCK+150,p0:camera.position.clone(),g0:tg.clone(),p1:endPos,g1:tg,dur:2200};
+  animateBuild();
+}
 </script>
 </body>
 </html>

@@ -261,7 +261,83 @@ footer .logo img{height:36px}
 .mbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:none;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
 .mbar .btn{flex:1;padding:15px 10px;font-size:15px}
 @media(max-width:700px){.mbar{display:flex}}
+
+/* ===== анимации ===== */
+.progress{position:fixed;left:0;top:0;height:3px;width:100%;background:linear-gradient(90deg,var(--brand),#ff6a6a);transform-origin:0 50%;transform:scaleX(0);z-index:60;pointer-events:none}
+header{transition:box-shadow .3s,background .3s}
+header.sc{box-shadow:0 8px 30px rgba(40,20,15,.10)}
+.btn-brand,.btn-white{position:relative;overflow:hidden;isolation:isolate}
+.btn-brand::after,.btn-white::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);z-index:-1;pointer-events:none;opacity:0}
+.btn-white::after{background:linear-gradient(100deg,transparent,rgba(143,20,28,.12),transparent)}
+.prod .pic{transition:transform .7s cubic-bezier(.2,.7,.2,1)}
+.prod .body{position:relative;z-index:1;background:#fff}
+.prod:hover .pic{transform:scale(1.07)}
+.jbi{transition:box-shadow .25s,transform .25s}
+.jbi:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(60,30,20,.10)}
+.yard .grid div{transition:transform .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s,filter .5s}
+.yard .grid div:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(0,0,0,.18);filter:saturate(1.15)}
+.step,.rev,.feat i{transition:transform .3s,box-shadow .3s,background .3s,color .3s}
+.step:hover,.rev:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(60,30,20,.09)}
+.feat div:hover i{background:var(--brand);color:#fff;transform:rotate(-6deg) scale(1.06)}
+.final .contacts a{transition:background .25s,transform .25s}
+.final .contacts a:hover{background:rgba(255,255,255,.18);transform:translateX(4px)}
+details{overflow:hidden;transition:box-shadow .25s,border-color .25s}
+details:hover{border-color:#d9cdc4}
+details[open]{box-shadow:0 10px 26px rgba(60,30,20,.07)}
+summary::after{transition:transform .3s}
+details[open] summary::after{content:"+";transform:rotate(45deg)}
+.total b{display:inline-block;font-variant-numeric:tabular-nums}
+
+@media (prefers-reduced-motion:no-preference){
+  html.anim .rv{opacity:0;transform:translateY(28px);transition:opacity .85s cubic-bezier(.2,.7,.2,1),transform .85s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0s)}
+  html.anim .rv.z{transform:translateY(18px) scale(.95)}
+  html.anim .rv.in{opacity:1;transform:none}
+
+  html.anim .hero-bg{animation:kb 18s cubic-bezier(.2,.6,.2,1) both}
+  @keyframes kb{from{transform:scale(1.14)}to{transform:scale(1)}}
+  html.anim .hero .badge,html.anim .hero h1,html.anim .hero .sub,html.anim .hero .cta,html.anim .hero .chips{animation:up .9s cubic-bezier(.2,.7,.2,1) both}
+  html.anim .hero h1{animation-delay:.12s}
+  html.anim .hero .sub{animation-delay:.26s}
+  html.anim .hero .cta{animation-delay:.4s}
+  html.anim .hero .chips{animation-delay:.54s}
+  @keyframes up{from{opacity:0;transform:translateY(30px)}}
+  html.anim .price-card{animation:card 1.1s .35s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes card{from{opacity:0;transform:translateY(46px) rotate(2.5deg) scale(.95)}}
+  html.anim .price-card .row{animation:up .7s cubic-bezier(.2,.7,.2,1) both}
+  html.anim .price-card .row:nth-of-type(1){animation-delay:.75s}
+  html.anim .price-card .row:nth-of-type(2){animation-delay:.85s}
+  html.anim .price-card .row:nth-of-type(3){animation-delay:.95s}
+  html.anim .price-card .row:nth-of-type(4){animation-delay:1.05s}
+  html.anim .hero h1 span{background:linear-gradient(rgba(255,143,143,.35),rgba(255,143,143,.35)) no-repeat 0 92%/0 .14em;animation:ul 1s 1.1s cubic-bezier(.6,0,.2,1) forwards}
+  @keyframes ul{to{background-size:100% .14em}}
+  .badge i{animation:pulse 2.2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,90,95,.6)}70%{box-shadow:0 0 0 10px rgba(255,90,95,0)}100%{box-shadow:0 0 0 0 rgba(255,90,95,0)}}
+  .btn-brand:hover::after,.btn-white:hover::after{opacity:1;animation:shine .8s ease}
+  .hero .cta .btn-brand::after{opacity:1;animation:shine 1s 2s ease both}
+  @keyframes shine{from{left:-60%}to{left:130%}}
+  .why-pic .cert{animation:float 5s ease-in-out infinite}
+  @keyframes float{50%{transform:translateY(-8px)}}
+  .final::before{animation:blob 9s ease-in-out infinite}
+  @keyframes blob{50%{transform:translate(-30px,24px) scale(1.12)}}
+  .try3d-pic{animation:tilt 5s ease-in-out infinite}
+  @keyframes tilt{0%,100%{transform:perspective(300px) rotateX(38deg)}50%{transform:perspective(300px) rotateX(26deg) translateY(-4px)}}
+  @keyframes tiltm{0%,100%{transform:perspective(400px) rotateX(30deg)}50%{transform:perspective(400px) rotateX(20deg)}}
+  @media(max-width:800px){.try3d-pic{animation-name:tiltm}}
+  .rev .vid span{transition:transform .3s}
+  .rev:hover .vid span{transform:scale(1.12)}
+  .rev .vid span::before{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid #fff;animation:ring 2.4s infinite}
+  @keyframes ring{from{transform:scale(1);opacity:.8}to{transform:scale(1.7);opacity:0}}
+  .mbar{animation:mbar .6s 1.2s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes mbar{from{transform:translateY(110%)}}
+  .sent svg circle{stroke-dasharray:63;stroke-dashoffset:63;animation:draw .7s .1s ease forwards}
+  .sent svg path{stroke-dasharray:14;stroke-dashoffset:14;animation:draw .4s .7s ease forwards}
+  .sent{animation:up .6s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .total b.pop{animation:pop .35s ease}
+  @keyframes pop{40%{transform:scale(1.06);color:var(--brand)}}
+}
 </style>
+<script>document.documentElement.classList.add('anim')</script>
 </head>
 <body>
 
@@ -530,7 +606,10 @@ footer .logo img{height:36px}
   var area=document.getElementById('area'),out=document.getElementById('areaOut'),tot=document.getElementById('total'),kerb=document.getElementById('kerb'),price=1500;
   var opts=document.querySelectorAll('#shape .opt');
   opts.forEach(function(o,i){o.addEventListener('click',function(){opts.forEach(function(x){x.classList.remove('on')});o.classList.add('on');price=i===0?1500:+o.dataset.p;calc()})});
-  function calc(){var a=+area.value;out.textContent=a+' м²';var s=a*price*1.07;if(kerb.checked){s+=Math.round(Math.sqrt(a)*4)*310}tot.textContent='≈ '+(Math.round(s/500)*500).toLocaleString('ru-RU')+' ₽'}
+  function calc(){var a=+area.value;out.textContent=a+' м²';var s=a*price*1.07;if(kerb.checked){s+=Math.round(Math.sqrt(a)*4)*310}setTotal(Math.round(s/500)*500)}
+  var cur=null,raf,rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function setTotal(v){cancelAnimationFrame(raf);if(cur===null||rm){cur=v;tot.textContent='≈ '+v.toLocaleString('ru-RU')+' ₽';return}var from=cur,t0=performance.now();tot.classList.remove('pop');void tot.offsetWidth;tot.classList.add('pop');
+    (function st(t){var k=Math.min(1,(t-t0)/450),e=1-Math.pow(1-k,3);cur=k<1?Math.round((from+(v-from)*e)/100)*100:v;tot.textContent='≈ '+cur.toLocaleString('ru-RU')+' ₽';if(k<1)raf=requestAnimationFrame(st)})(t0)}
   try{var qa=+new URLSearchParams(location.search).get('area');if(qa>=5&&qa<=400)area.value=Math.round(qa/5)*5}catch(e){}
   area.addEventListener('input',calc);kerb.addEventListener('change',calc);calc();
 
@@ -546,6 +625,30 @@ footer .logo img{height:36px}
     if(!ok){ph.style.borderColor='#c62828';ph.focus();return}
     if(bot)return;
     f.style.display='none';document.getElementById('sent').style.display='block'});
+})();
+</script>
+<script>
+/* анимации: появление при прокрутке, счётчики, прогресс, вопросы */
+(function(){
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var bar=document.createElement('div');bar.className='progress';document.body.appendChild(bar);
+  var hdr=document.querySelector('header'),tick=false;
+  function onScroll(){if(tick)return;tick=true;requestAnimationFrame(function(){var h=document.documentElement,m=h.scrollHeight-h.clientHeight;bar.style.transform='scaleX('+(m>0?h.scrollTop/m:0)+')';hdr.classList.toggle('sc',h.scrollTop>10);tick=false})}
+  addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+  // плавное раскрытие вопросов
+  document.querySelectorAll('details').forEach(function(d){var s=d.querySelector('summary');s.addEventListener('click',function(e){if(reduce||!d.animate)return;e.preventDefault();if(d._a)return;var start=d.offsetHeight;
+    if(d.open){var end=s.offsetHeight+2;d._a=d.animate({height:[start+'px',end+'px']},{duration:280,easing:'cubic-bezier(.4,0,.2,1)'});d._a.onfinish=function(){d.open=false;d._a=null}}
+    else{d.open=true;var end2=d.offsetHeight;d._a=d.animate({height:[start+'px',end2+'px']},{duration:320,easing:'cubic-bezier(.4,0,.2,1)'});d._a.onfinish=function(){d._a=null}}})});
+
+  if(reduce||!('IntersectionObserver' in window)){document.documentElement.classList.remove('anim');return}
+  var groups=[['.sec-head > *',0],['section > .wrap > .eyebrow, section > .wrap > h2, section > .wrap > .lead',0],['.grid-6 > .prod',1],['.grid-4 > .jbi',1],['.table, .visit, .more-row, .try3d',0],['.yard .grid > div',1],['.why-pic',2],['.feat > div',0],['.steps > .step',1],['.revs > .rev',1],['.faq > div:first-child, details',0],['.calc .wrap > div:first-child > *',0],['.calc-box',2],['.final',2],['footer .wrap > div',0],['.stat',0]];
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);if(e.target.classList.contains('stat'))count(e.target)}})},{rootMargin:'0px 0px -4% 0px',threshold:.04});
+  groups.forEach(function(g){var seen=new Map();document.querySelectorAll(g[0]).forEach(function(el){if(el.closest('.hero')||el.classList.contains('rv'))return;var p=el.parentNode,i=seen.get(p)||0;seen.set(p,i+1);el.classList.add('rv');if(g[1]===2)el.classList.add('z');el.style.setProperty('--d',Math.min(i,6)*.08+'s');io.observe(el)})});
+
+  // счётчики в цифрах
+  function count(el){var b=el.querySelector('b');if(!b)return;var m=b.textContent.match(/^(\d+)(\D.*)$/);if(!m||/из/.test(m[2]))return;var to=+m[1],rest=m[2],t0=performance.now();
+    (function st(t){var k=Math.min(1,(t-t0)/1300),e=1-Math.pow(1-k,3);b.textContent=Math.round(to*e)+rest;if(k<1)requestAnimationFrame(st)})(t0)}
 })();
 </script>
 </body>
