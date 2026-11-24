@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Монолит-Вест · брусчатка и ЖБИ в Пскове (набросок)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --brand:#8f141c; --brand-d:#701017; --brand-l:#fbeeee;
+  --dark:#1c1817; --dark-2:#2a2423;
+  --bg:#f6f3ef; --card:#fff; --line:#e7e0d8; --ink:#1c1817; --soft:#5d5450; --mute:#958a84;
+  --ok:#1f8a4c; --tg:#2aa3df;
+  --f:"Onest","Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+svg{display:block}
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+h1,h2,h3{margin:0;letter-spacing:-.02em;line-height:1.1}
+h2{font-size:clamp(28px,3.6vw,44px);font-weight:800}
+.lead{font-size:18px;color:var(--soft);max-width:640px;margin:14px 0 0}
+.eyebrow{display:inline-block;font:700 12.5px/1 var(--f);letter-spacing:.12em;text-transform:uppercase;color:var(--brand);margin-bottom:14px}
+section{padding:88px 0}
+@media(max-width:700px){section{padding:60px 0}.wrap{padding:0 16px}}
+
+/* отметки «уточним» */
+.ph{display:inline-flex;align-items:center;gap:5px;font:600 10.5px/1 var(--f);color:#b5701b;background:#fff6e8;border:1px dashed #e6b877;padding:5px 7px;border-radius:6px;white-space:nowrap;vertical-align:middle;letter-spacing:.01em}
+.ph::before{content:"";width:5px;height:5px;border-radius:50%;background:#e39a3b}
+/* заметки для Николая */
+.note{display:flex;gap:10px;align-items:flex-start;background:#eef5ff;border:1px dashed #7aa7e8;color:#1e4b8a;border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.45}
+.note b{color:#123a70}
+.note svg{flex:none;margin-top:1px}
+
+/* полоса сверху */
+.strip{background:#000;color:#cfc8c4;font-size:12.5px;text-align:center}
+.strip .wrap{padding-block:9px}
+.strip b{color:#fff;font-weight:600}
+
+/* шапка */
+header{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:72px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo img{height:40px;width:auto}
+.logo b{display:block;font-weight:800;font-size:19px;line-height:1;color:var(--brand);letter-spacing:.01em}
+.logo small{display:block;white-space:nowrap;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin-top:4px}
+nav.menu{display:flex;gap:28px;font-size:15px;font-weight:500;color:var(--soft)}
+nav.menu a:hover{color:var(--brand)}
+.h-right{display:flex;align-items:center;gap:18px}
+.h-phone{text-align:right;line-height:1.2}
+.h-phone b{display:block;font-size:17px;font-weight:700}
+.h-phone small{font-size:12px;color:var(--mute)}
+.h-phone small i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#2fbf6b;margin-right:5px;font-style:normal}
+@media(max-width:1020px){nav.menu{display:none}}
+@media(max-width:700px){.h-phone{display:none}header .wrap{height:62px}.logo img{height:34px}.logo b{font-size:17px}.logo small{font-size:9.5px;letter-spacing:.06em}}
+
+/* кнопки */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:17px 24px;font:700 16px var(--f);border-radius:12px;border:2px solid transparent;white-space:nowrap;cursor:pointer;transition:background .2s,transform .2s}
+.btn:active{transform:scale(.98)}
+.btn-brand{background:var(--brand);color:#fff}
+.btn-brand:hover{background:var(--brand-d)}
+.btn-white{background:#fff;color:var(--ink)}
+.btn-ghost{border-color:rgba(255,255,255,.45);color:#fff}
+.btn-line{border-color:var(--ink);color:var(--ink);background:transparent}
+.btn-sm{padding:11px 16px;font-size:14px;border-radius:10px}
+.btn-tg{background:var(--tg);color:#fff}
+
+/* герой */
+.hero{position:relative;color:#fff;padding:0;background:var(--dark);overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:url(img/foto-1.jpg) center 60%/cover}
+.hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(20,14,13,.94) 0%,rgba(20,14,13,.82) 45%,rgba(20,14,13,.35) 100%)}
+.hero .wrap{position:relative;display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;padding-block:84px 92px}
+.badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:8px 13px;border-radius:99px;font-size:13.5px;font-weight:600}
+.badge i{width:8px;height:8px;border-radius:50%;background:#ff5a5f;box-shadow:0 0 0 4px rgba(255,90,95,.25)}
+.hero h1{font-size:clamp(36px,5.4vw,66px);font-weight:800;margin:22px 0 0}
+.hero h1 span{color:#ff8f8f}
+.hero p.sub{font-size:19px;color:#e3dbd7;max-width:560px;margin:20px 0 0}
+.hero .cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.hero .chips{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:30px;font-size:14.5px;color:#e3dbd7}
+.hero .chips span{display:flex;align-items:center;gap:8px}
+.hero .chips svg{color:#ff8f8f}
+.price-card{background:#fff;color:var(--ink);border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.price-card .pic{height:220px;background:url(img/foto-4.jpg) center/cover;position:relative}
+.price-card .pic em{position:absolute;left:14px;top:14px;background:var(--brand);color:#fff;font:700 12.5px var(--f);font-style:normal;padding:7px 11px;border-radius:8px}
+.price-card .body{padding:20px 22px 22px}
+.price-card h3{font-size:20px}
+.price-card .row{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:11px 0;border-bottom:1px dashed var(--line);font-size:15px;color:var(--soft)}
+.price-card .row b{color:var(--ink);font-size:17px;white-space:nowrap}
+.price-card .btn{width:100%;margin-top:16px}
+@media(max-width:900px){.hero .wrap{grid-template-columns:1fr;padding-block:48px 56px;gap:34px}.hero-bg::after{background:linear-gradient(180deg,rgba(20,14,13,.9),rgba(20,14,13,.8) 60%,rgba(20,14,13,.95))}.hero .cta .btn{flex:1 1 100%}.hero p.sub{font-size:17px}}
+
+/* цифры */
+.stats{background:#fff;border-bottom:1px solid var(--line);padding:0}
+.stats .wrap{display:grid;grid-template-columns:repeat(4,1fr)}
+.stat{padding:28px 22px;border-left:1px solid var(--line)}
+.stat:first-child{border-left:0}
+.stat b{display:block;font-size:34px;font-weight:800;color:var(--brand);letter-spacing:-.02em;line-height:1}
+.stat span{display:block;font-size:14.5px;color:var(--soft);margin-top:8px}
+@media(max-width:800px){.stats .wrap{grid-template-columns:1fr 1fr}.stat{border-left:0;border-top:1px solid var(--line);padding:22px 8px}.stat:nth-child(-n+2){border-top:0}.stat:nth-child(even){padding-left:18px;border-left:1px solid var(--line)}.stat b{font-size:28px}}
+
+/* каталог */
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:34px;flex-wrap:wrap}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{padding:10px 16px;border-radius:99px;border:1px solid var(--line);background:#fff;font:600 14px var(--f);color:var(--soft);cursor:pointer}
+.tab.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.grid-6{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.prod{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s,transform .2s}
+.prod:hover{box-shadow:0 18px 40px rgba(60,30,20,.12);transform:translateY(-3px)}
+.prod .pic{aspect-ratio:4/3;background-size:cover;background-position:center;position:relative}
+.prod .pic small{position:absolute;left:12px;top:12px;background:rgba(255,255,255,.94);font-weight:700;font-size:12px;padding:6px 10px;border-radius:7px}
+.prod .body{padding:18px 18px 20px;display:flex;flex-direction:column;gap:8px;flex:1}
+.prod h3{font-size:19px}
+.prod .meta{font-size:14px;color:var(--mute)}
+.prod .foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:10px}
+.prod .price{font-size:22px;font-weight:800}
+.prod .price small{font-size:14px;font-weight:500;color:var(--mute)}
+.colors{display:flex;gap:6px;margin-top:2px}
+.colors i{width:18px;height:18px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line)}
+.more-row{display:flex;justify-content:center;margin-top:30px;gap:12px;flex-wrap:wrap}
+.try3d{display:flex;align-items:center;gap:24px;margin-top:34px;background:var(--dark);color:#fff;border-radius:20px;padding:22px 26px 22px 22px;overflow:hidden;transition:transform .2s}
+.try3d:hover{transform:translateY(-2px)}
+.try3d-pic{flex:none;width:150px;height:96px;border-radius:12px;background:url(img/kirpich-osen.jpg) center/cover;transform:perspective(300px) rotateX(38deg);box-shadow:0 14px 24px rgba(0,0,0,.4)}
+.try3d-t{flex:1;min-width:0}
+.try3d .eyebrow{color:#ff8f8f;margin-bottom:8px}
+.try3d b{display:block;font-size:22px;line-height:1.2;letter-spacing:-.01em}
+.try3d p{margin:6px 0 0;color:#cbc1bc;font-size:15px}
+@media(max-width:800px){.try3d{flex-direction:column;align-items:stretch;text-align:left;gap:16px;padding:18px}.try3d-pic{width:100%;height:110px;transform:perspective(400px) rotateX(30deg)}.try3d .btn{width:100%}.try3d b{font-size:20px}}
+@media(max-width:900px){.grid-6{grid-template-columns:1fr 1fr;gap:14px}.prod .body{padding:14px}.prod h3{font-size:16px}.prod .price{font-size:18px}.prod .foot .btn{display:none}}
+
+/* калькулятор */
+.calc{background:var(--dark);color:#fff}
+.calc .wrap{display:grid;grid-template-columns:1fr 1.05fr;gap:56px;align-items:start}
+.calc h2{color:#fff}
+.calc .lead{color:#cbc1bc}
+.calc ul{list-style:none;padding:0;margin:26px 0 0;display:grid;gap:14px}
+.calc li{display:flex;gap:12px;align-items:flex-start;color:#e3dbd7}
+.calc li svg{color:#ff8f8f;flex:none;margin-top:2px}
+.calc-box{background:#fff;color:var(--ink);border-radius:22px;padding:28px}
+.calc-box label.t{display:block;font-weight:700;font-size:15px;margin-bottom:10px}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:22px}
+.opt{border:1.5px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center;font-size:14px;font-weight:600;cursor:pointer;background:#fff}
+.opt small{display:block;font-weight:500;color:var(--mute);font-size:12px;margin-top:2px}
+.opt.on{border-color:var(--brand);background:var(--brand-l);color:var(--brand)}
+.range-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.range-row output{font-size:26px;font-weight:800}
+input[type=range]{width:100%;accent-color:var(--brand);margin:0 0 22px}
+.check{display:flex;align-items:center;gap:10px;font-size:15px;margin-bottom:22px;cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--brand)}
+.total{background:var(--bg);border-radius:14px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.total span{font-size:14px;color:var(--soft)}
+.total b{font-size:30px;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
+@media(max-width:500px){.total b{font-size:24px}.total span{font-size:13px}}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.inp{width:100%;padding:16px 16px;border:1.5px solid var(--line);border-radius:12px;font:500 16px var(--f);background:#fff;color:var(--ink)}
+.inp:focus{outline:none;border-color:var(--brand)}
+.hp{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0}
+.calc-box .btn{width:100%;margin-top:10px}
+.agree{font-size:12px;color:var(--mute);margin-top:10px;text-align:center}
+.sent{display:none;text-align:center;padding:26px 0 10px}
+.sent b{display:block;font-size:22px;margin:10px 0 4px}
+.calc .note{margin-top:22px}
+@media(max-width:900px){.calc .wrap{grid-template-columns:1fr;gap:30px}.calc-box{padding:20px}.opts{grid-template-columns:1fr 1fr}.form-row{grid-template-columns:1fr}}
+
+/* ЖБИ */
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.jbi{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.jbi .pic{aspect-ratio:4/3;background:#fff center/contain no-repeat;border-bottom:1px solid var(--line)}
+.jbi .body{padding:16px 18px 18px}
+.jbi h3{font-size:18px}
+.jbi p{margin:6px 0 12px;font-size:14px;color:var(--mute)}
+.jbi .price{font-weight:800;font-size:19px}
+.jbi .price small{font-weight:500;font-size:14px;color:var(--mute)}
+.table{margin-top:28px;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.table .tr{display:grid;grid-template-columns:2fr 1fr 1fr;padding:14px 20px;border-top:1px solid var(--line);font-size:15px}
+.table .tr:first-child{border-top:0;background:var(--bg);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
+.table .tr b{font-weight:700}
+@media(max-width:900px){.grid-4{grid-template-columns:1fr 1fr;gap:12px}.jbi .body{padding:12px}.jbi h3{font-size:16px}.jbi p{display:none}.table .tr{grid-template-columns:1.6fr 1fr;padding:12px 14px}.table .tr span:nth-child(2){display:none}}
+
+/* площадка */
+.yard{background:#fff}
+.yard .grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:200px;gap:12px;margin-top:34px}
+.yard .grid div{border-radius:16px;background-size:cover;background-position:center;position:relative}
+.yard .grid div:first-child{grid-column:span 2;grid-row:span 2}
+.yard .grid div span{position:absolute;left:12px;bottom:12px;background:rgba(0,0,0,.6);color:#fff;font-size:13px;font-weight:600;padding:6px 10px;border-radius:8px}
+.visit{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;margin-top:24px;background:var(--bg);border-radius:18px;padding:22px 24px}
+.visit b{font-size:19px}
+.visit p{margin:4px 0 0;color:var(--soft)}
+@media(max-width:900px){.yard .grid{grid-template-columns:1fr 1fr;grid-auto-rows:130px}.visit{grid-template-columns:1fr}.visit .btn{width:100%}}
+
+/* почему мы */
+.why{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.why-pic{border-radius:22px;aspect-ratio:4/3.4;background:url(img/foto-7.jpg) center/cover;position:relative}
+.why-pic .cert{position:absolute;right:-18px;bottom:-18px;background:#fff;border-radius:16px;padding:16px 18px;box-shadow:0 20px 50px rgba(0,0,0,.15);display:flex;gap:12px;align-items:center;max-width:270px}
+.why-pic .cert div{width:46px;height:46px;border-radius:12px;background:var(--brand-l);color:var(--brand);display:grid;place-items:center;flex:none}
+.why-pic .cert b{display:block;font-size:15px;line-height:1.25}
+.why-pic .cert small{color:var(--mute);font-size:12.5px}
+.feat{display:grid;gap:22px;margin-top:30px}
+.feat div{display:flex;gap:16px}
+.feat i{width:48px;height:48px;border-radius:14px;background:var(--brand-l);color:var(--brand);display:grid;place-items:center;flex:none}
+.feat b{display:block;font-size:18px}
+.feat p{margin:3px 0 0;color:var(--soft);font-size:15px}
+@media(max-width:900px){.why{grid-template-columns:1fr;gap:34px}.why-pic .cert{right:12px;bottom:-22px}}
+
+/* шаги */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:36px;counter-reset:s}
+.step{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px 22px;position:relative}
+.step::before{counter-increment:s;content:"0" counter(s);font-weight:800;font-size:15px;color:var(--brand);display:block;margin-bottom:26px}
+.step b{display:block;font-size:18px}
+.step p{margin:6px 0 0;color:var(--soft);font-size:14.5px}
+@media(max-width:900px){.steps{grid-template-columns:1fr 1fr;gap:12px}.step{padding:18px 16px}.step::before{margin-bottom:12px}}
+
+/* отзывы */
+.revs{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:34px}
+.rev{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px}
+.rev .vid{aspect-ratio:16/10;border-radius:12px;background:#2a2423 center/cover;margin-bottom:16px;display:grid;place-items:center;position:relative}
+.rev .vid::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.35);border-radius:12px}
+.rev .vid span{position:relative;z-index:1;width:58px;height:58px;border-radius:50%;background:#fff;display:grid;place-items:center;color:var(--brand)}
+.stars{color:#f2a900;letter-spacing:2px;font-size:15px}
+.rev p{margin:8px 0 14px;font-size:15px}
+.rev .who{display:flex;gap:10px;align-items:center;font-size:14px}
+.rev .who i{width:36px;height:36px;border-radius:50%;background:var(--brand-l);color:var(--brand);display:grid;place-items:center;font-style:normal;font-weight:700}
+.rev .who small{display:block;color:var(--mute)}
+@media(max-width:900px){.revs{grid-template-columns:1fr}}
+
+/* вопросы */
+.faq{display:grid;grid-template-columns:.8fr 1.2fr;gap:48px}
+details{background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;padding:0 20px}
+summary{list-style:none;cursor:pointer;padding:18px 0;font-weight:700;font-size:16.5px;display:flex;justify-content:space-between;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:24px;line-height:1;color:var(--brand);font-weight:500}
+details[open] summary::after{content:"–"}
+details p{margin:-4px 0 18px;color:var(--soft)}
+@media(max-width:900px){.faq{grid-template-columns:1fr;gap:24px}}
+
+/* финал */
+.final{background:var(--brand);color:#fff;border-radius:28px;padding:56px;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;position:relative;overflow:hidden}
+.final::before{content:"";position:absolute;right:-80px;top:-80px;width:360px;height:360px;border-radius:50%;background:rgba(255,255,255,.06)}
+.final h2{color:#fff}
+.final p{color:#f3d6d6;font-size:18px;margin:14px 0 0}
+.final .contacts{display:grid;gap:10px;position:relative}
+.final .contacts a{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);padding:16px 18px;border-radius:14px}
+.final .contacts a b{display:block;font-size:17px}
+.final .contacts a small{color:#f3d6d6}
+@media(max-width:900px){.final{grid-template-columns:1fr;padding:32px 22px;border-radius:22px}}
+
+footer{background:var(--dark);color:#bdb2ad;padding:46px 0 50px;font-size:14px;margin-top:88px}
+footer .wrap{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:30px}
+footer b{color:#fff;display:block;margin-bottom:10px}
+footer a{display:block;margin:6px 0}
+footer .logo b{color:#fff;margin:0}
+footer .logo img{height:36px}
+@media(max-width:800px){footer .wrap{grid-template-columns:1fr 1fr}footer{margin-top:60px;padding-bottom:110px}}
+
+/* нижняя панель на телефоне */
+.mbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:none;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+.mbar .btn{flex:1;padding:15px 10px;font-size:15px}
+@media(max-width:700px){.mbar{display:flex}}
+</style>
+</head>
+<body>
+
+<div class="strip"><div class="wrap">Набросок нового сайта для <b>«Монолит-Вест»</b> от Azi Dev. <span class="ph">уточним</span> — места для ваших цифр, <span style="color:#9cc2ff">синие заметки</span> — пояснения для вас, на сайте их не будет.</div></div>
+
+<header>
+  <div class="wrap">
+    <a class="logo" href="#"><img src="img/emblema.png" alt=""><div><b>МОНОЛИТ-ВЕСТ</b><small>Брусчатка и ЖБИ · Псков</small></div></a>
+    <nav class="menu"><a href="#katalog">Брусчатка</a><a href="#jbi">ЖБИ</a><a href="#raschet">Расчёт</a><a href="#ploshchadka">Площадка</a><a href="#voprosy">Доставка</a><a href="#kontakty">Контакты</a></nav>
+    <div class="h-right">
+      <div class="h-phone"><b>8 (921) 215-26-43</b><small><i></i>Пн–Сб 9:00–18:00</small></div>
+      <a class="btn btn-brand btn-sm" href="#raschet">Рассчитать</a>
+    </div>
+  </div>
+</header>
+
+<!-- 1. Первый экран -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="wrap">
+    <div>
+      <span class="badge"><i></i>Своё производство в Пскове · более 20 лет</span>
+      <h1>Брусчатка и ЖБИ <span>от производителя</span> без посредников</h1>
+      <p class="sub">Тротуарная плитка, бордюры и колодезные кольца с завода на Карбышева, 26а. Посчитаем, сколько нужно, и привезём на объект.</p>
+      <div class="cta">
+        <a class="btn btn-brand" href="#raschet">Рассчитать стоимость за 1 минуту</a>
+        <a class="btn btn-ghost" href="tel:89212152643"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>Позвонить</a>
+      </div>
+      <div class="chips">
+        <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>Сертифицированный бетон</span>
+        <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>13 цветов, все вживую на площадке</span>
+        <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>Доставка по Пскову и области <span class="ph">уточним</span></span>
+      </div>
+    </div>
+    <div class="price-card">
+      <div class="pic"><em>Цены завода</em></div>
+      <div class="body">
+        <h3>Прайс на сегодня</h3>
+        <div class="row">Брусчатка «Кирпич» белая<b>1 500 ₽/м²</b></div>
+        <div class="row">Брусчатка цветная, 7 оттенков<b>2 000 ₽/м²</b></div>
+        <div class="row">Кольцо колодезное КС-10-9<b>3 200 ₽</b></div>
+        <div class="row">Бордюр БР 100.20.8<b>310 ₽</b></div>
+        <a class="btn btn-brand" href="#raschet">Получить расчёт на мой участок</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. Цифры -->
+<section class="stats">
+  <div class="wrap">
+    <div class="stat"><b>20+ лет</b><span>производим брусчатку и ЖБИ</span></div>
+    <div class="stat"><b>1 из 2</b><span>сертифицированных производителей в области</span></div>
+    <div class="stat"><b>13 цветов</b><span>и 4 формы плитки на выбор</span></div>
+    <div class="stat"><b>15 минут</b><span>и вы знаете точную цену <span class="ph">уточним</span></span></div>
+  </div>
+</section>
+
+<!-- 3. Каталог брусчатки -->
+<section id="katalog">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Брусчатка</span>
+        <h2>Подберите плитку для двора и дорожек</h2>
+        <p class="lead">Цена за квадратный метр, без скрытых доплат. Толщина 6 см для дорожек и 8 см под машину <span class="ph">уточним</span></p>
+      </div>
+      <div class="tabs"><span class="tab on">Кирпич</span><span class="tab">Новый город</span><span class="tab">Старый город</span><span class="tab">Паркет</span></div>
+    </div>
+    <div class="grid-6">
+      <div class="prod"><div class="pic" style="background-image:url(img/kirpich-belyj.jpg)"><small>Дешевле всего</small></div><div class="body"><h3>«Кирпич» белый</h3><div class="meta">200×100×60 мм <span class="ph">уточним</span></div><div class="foot"><div class="price">1 500 ₽ <small>/м²</small></div><a class="btn btn-line btn-sm" href="#raschet">Рассчитать</a></div></div></div>
+      <div class="prod"><div class="pic" style="background-image:url(img/kirpich-osen.jpg)"><small>Хит продаж</small></div><div class="body"><h3>«Кирпич» осень</h3><div class="meta">Колормикс · 200×100×60 мм</div><div class="foot"><div class="price">2 000 ₽ <small>/м²</small></div><a class="btn btn-line btn-sm" href="#raschet">Рассчитать</a></div></div></div>
+      <div class="prod"><div class="pic" style="background-image:url(img/kirpich-klinker.jpg)"></div><div class="body"><h3>«Кирпич» клинкер</h3><div class="meta">Колормикс · 200×100×60 мм</div><div class="foot"><div class="price">2 000 ₽ <small>/м²</small></div><a class="btn btn-line btn-sm" href="#raschet">Рассчитать</a></div></div></div>
+      <div class="prod"><div class="pic" style="background-image:url(img/kirpich-noch.jpg)"></div><div class="body"><h3>«Кирпич» ночь</h3><div class="meta">Колормикс · 200×100×60 мм</div><div class="foot"><div class="price">2 000 ₽ <small>/м²</small></div><a class="btn btn-line btn-sm" href="#raschet">Рассчитать</a></div></div></div>
+      <div class="prod"><div class="pic" style="background-image:url(img/kirpich-yantar.jpg)"></div><div class="body"><h3>«Кирпич» янтарь</h3><div class="meta">Колормикс · 200×100×60 мм</div><div class="foot"><div class="price">2 000 ₽ <small>/м²</small></div><a class="btn btn-line btn-sm" href="#raschet">Рассчитать</a></div></div></div>
+      <div class="prod"><div class="pic" style="background-image:url(img/kirpich-kapuchino.jpg)"></div><div class="body"><h3>«Кирпич» капучино</h3><div class="meta">Колормикс · 200×100×60 мм</div><div class="foot"><div class="price">2 000 ₽ <small>/м²</small></div><a class="btn btn-line btn-sm" href="#raschet">Рассчитать</a></div></div></div>
+    </div>
+    <div class="more-row"><a class="btn btn-line" href="#">Все 13 цветов и формы</a><a class="btn btn-brand" href="#ploshchadka">Посмотреть вживую</a></div>
+    <a class="try3d" href="3d.html"><div class="try3d-pic"></div><div class="try3d-t"><span class="eyebrow">Новое · 3D</span><b>Примерьте брусчатку к своему дому</b><p>Выберите дом, цвет и рисунок укладки, покрутите двор со всех сторон и сразу узнайте примерную цену.</p></div><span class="btn btn-white">Открыть примерочную</span></a>
+  </div>
+</section>
+
+<!-- 4. Калькулятор + заявка -->
+<section class="calc" id="raschet">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow" style="color:#ff8f8f">Расчёт за 1 минуту</span>
+      <h2>Сколько стоит плитка на ваш участок?</h2>
+      <p class="lead">Укажите площадь и форму, увидите примерную цену сразу. Точный расчёт с доставкой пришлём в течение 15 минут <span class="ph">уточним</span></p>
+      <ul>
+        <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>Подскажем толщину под машину или под дорожку</li>
+        <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>Посчитаем бордюры и запас на подрезку</li>
+        <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>Цена завода, без наценки магазинов</li>
+      </ul>
+      <div class="note"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/></svg><div><b>Для Николая: защита от спама.</b> В форме стоит невидимая ловушка для ботов, проверка скорости заполнения и номера телефона. Боты отсеиваются сами, а клиенту не нужно вводить капчу. Заявка сразу приходит вам в Telegram и на почту.</div></div>
+    </div>
+    <div class="calc-box">
+      <form id="calcForm" novalidate>
+        <label class="t">Форма плитки</label>
+        <div class="opts" id="shape">
+          <div class="opt on" data-p="2000">Кирпич<small>от 1 500 ₽</small></div>
+          <div class="opt" data-p="2000">Новый город<small>2 000 ₽ <span class="ph" style="padding:2px 4px;font-size:9px">уточ.</span></small></div>
+          <div class="opt" data-p="2000">Старый город<small>2 000 ₽</small></div>
+          <div class="opt" data-p="2000">Паркет<small>2 000 ₽</small></div>
+        </div>
+        <div class="range-row"><label class="t" style="margin:0">Площадь</label><output id="areaOut">60 м²</output></div>
+        <input type="range" id="area" min="5" max="400" step="5" value="60">
+        <label class="check"><input type="checkbox" id="kerb" checked>Добавить бордюр по периметру</label>
+        <div class="total"><span>Примерно, без доставки</span><b id="total">≈ 125 000 ₽</b></div>
+        <div class="form-row">
+          <input class="inp" name="name" placeholder="Ваше имя" autocomplete="name">
+          <input class="inp" name="phone" id="phone" type="tel" inputmode="tel" placeholder="+7 (___) ___-__-__" autocomplete="tel">
+        </div>
+        <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button class="btn btn-brand" type="submit">Получить точный расчёт</button>
+        <div class="agree">Перезвоним или напишем в мессенджер. Без спама и рассылок.</div>
+      </form>
+      <div class="sent" id="sent"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#1f8a4c" stroke-width="2" style="margin:0 auto"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg><b>Заявка отправлена</b>Перезвоним в течение 15 минут в рабочее время.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. ЖБИ -->
+<section id="jbi">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">ЖБИ изделия</span>
+        <h2>Кольца, бордюры, люки и блоки</h2>
+        <p class="lead">Для колодцев, септиков, фундаментов и дорог. Есть на складе, отгружаем в день заявки <span class="ph">уточним</span></p>
+      </div>
+      <a class="btn btn-line" href="#raschet">Запросить прайс на ЖБИ</a>
+    </div>
+    <div class="grid-4">
+      <div class="jbi"><div class="pic" style="background-image:url(img/kolca.jpg)"></div><div class="body"><h3>Кольца колодезные</h3><p>КС-10, КС-15, КС-20, с дном и дренажные</p><div class="price">от 2 000 ₽ <small>/шт</small></div></div></div>
+      <div class="jbi"><div class="pic" style="background-image:url(img/bordur.jpg)"></div><div class="body"><h3>Бордюры</h3><p>Садовые и дорожные, БР 100.20.8 и 100.30.15</p><div class="price">от 310 ₽ <small>/шт</small></div></div></div>
+      <div class="jbi"><div class="pic" style="background-image:url(img/luki.jpg)"></div><div class="body"><h3>Люки</h3><p>Полимерные и чугунные, под любую нагрузку</p><div class="price">от <span class="ph">цена</span></div></div></div>
+      <div class="jbi"><div class="pic" style="background-image:url(img/bloki.jpg)"></div><div class="body"><h3>Блоки ФБС</h3><p>Фундаментные блоки разных размеров</p><div class="price">от <span class="ph">цена</span></div></div></div>
+    </div>
+    <div class="table">
+      <div class="tr"><span>Популярное</span><span>Размер</span><span>Цена</span></div>
+      <div class="tr"><b>Кольцо КС-10-9</b><span>Ø 1000, h 900 мм</span><b>3 200 ₽</b></div>
+      <div class="tr"><b>Кольцо КС-15-9</b><span>Ø 1500, h 900 мм</span><b>4 500 ₽</b></div>
+      <div class="tr"><b>Кольцо КС-20-9</b><span>Ø 2000, h 900 мм</span><b>10 000 ₽</b></div>
+      <div class="tr"><b>Бордюр БР 100.30.15</b><span>1000×300×150 мм</span><b>600 ₽</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. Площадка -->
+<section class="yard" id="ploshchadka">
+  <div class="wrap">
+    <span class="eyebrow">Живые фото</span>
+    <h2>Приезжайте и выберите цвет вживую</h2>
+    <p class="lead">На площадке у завода собраны стенды со всеми цветами и раскладками. На экране оттенок выглядит иначе, а здесь видно, как плитка ляжет у вас во дворе.</p>
+    <div class="grid">
+      <div style="background-image:url(img/foto-2.jpg)"><span>Стенды с образцами</span></div>
+      <div style="background-image:url(img/foto-4.jpg)"><span>Ёлочка, колормикс</span></div>
+      <div style="background-image:url(img/foto-6.jpg)"><span>Въезд во двор</span></div>
+      <div style="background-image:url(img/foto-3.jpg)"><span>Все цвета рядом</span></div>
+      <div style="background-image:url(img/foto-5.jpg)"><span>Серый «Старый город»</span></div>
+    </div>
+    <div class="visit">
+      <div><b>г. Псков, ул. Карбышева, 26а</b><p>Пн–Сб с 9:00 до 18:00. Покажем образцы и посчитаем на месте.</p></div>
+      <a class="btn btn-brand" href="#">Построить маршрут</a>
+    </div>
+  </div>
+</section>
+
+<!-- 7. Почему мы -->
+<section>
+  <div class="wrap why">
+    <div class="why-pic"><div class="cert"><div><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="6"/><path d="m8.5 14-1.5 8 5-3 5 3-1.5-8"/></svg></div><span><b>Сертификаты на брусчатку и ЖБИ</b><small>Покажем на площадке</small></span></div></div>
+    <div>
+      <span class="eyebrow">Почему мы</span>
+      <h2>Покупаете у завода, а не у перекупщика</h2>
+      <div class="feat">
+        <div><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20M4 20V10l6 3V9l6 3V4h4v16"/></svg></i><span><b>Собственное производство</b><p>Контролируем бетон на каждом этапе, поэтому плитка не крошится после первой зимы.</p></span></div>
+        <div><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/></svg></i><span><b>Выдерживает машину</b><p>Прочный вибропрессованный бетон для парковок и въездов <span class="ph">марка бетона</span></p></span></div>
+        <div><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="7" width="14" height="10" rx="1"/><path d="M15 10h4l3 3v4h-7"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg></i><span><b>Доставка на объект</b><p>Привезём манипулятором и выгрузим, куда скажете <span class="ph">уточним</span></p></span></div>
+        <div><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></i><span><b>Поможем с выбором</b><p>Подскажем форму, цвет и раскладку, посчитаем точное количество.</p></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. Как заказать -->
+<section style="padding-top:20px">
+  <div class="wrap">
+    <span class="eyebrow">Как заказать</span>
+    <h2>От заявки до плитки во дворе</h2>
+    <div class="steps">
+      <div class="step"><b>Заявка или звонок</b><p>Оставляете площадь на сайте или звоните.</p></div>
+      <div class="step"><b>Расчёт за 15 минут</b><p>Присылаем цену с доставкой и бордюрами.</p></div>
+      <div class="step"><b>Выбор цвета</b><p>По фото или вживую на площадке.</p></div>
+      <div class="step"><b>Доставка</b><p>Привозим на объект в удобный день <span class="ph">сроки</span></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9. Отзывы -->
+<section style="padding-top:20px">
+  <div class="wrap">
+    <span class="eyebrow">Отзывы</span>
+    <h2>Что говорят клиенты <span class="ph">заменим на ваши</span></h2>
+    <div class="revs">
+      <div class="rev"><div class="vid" style="background-image:url(img/foto-6.jpg)"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div><div class="stars">★★★★★</div><p>Пример отзыва: выложили въезд во двор, машина стоит третий год, плитка как новая.</p><div class="who"><i>С</i><span>Имя клиента<small>Частный дом, 80 м²</small></span></div></div>
+      <div class="rev"><div class="vid" style="background-image:url(img/foto-4.jpg)"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div><div class="stars">★★★★★</div><p>Пример отзыва: приехали на площадку, выбрали «осень» вживую. Посчитали всё с бордюрами за 10 минут.</p><div class="who"><i>А</i><span>Имя клиента<small>Дача, дорожки</small></span></div></div>
+      <div class="rev"><div class="vid" style="background-image:url(img/kolca.jpg);background-color:#fff;background-size:contain;background-repeat:no-repeat"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div><div class="stars">★★★★★</div><p>Пример отзыва: брали кольца на колодец, привезли на следующий день и выгрузили прямо к яме.</p><div class="who"><i>В</i><span>Имя клиента<small>Колодец, 8 колец</small></span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 10. Вопросы -->
+<section id="voprosy" style="padding-top:20px">
+  <div class="wrap faq">
+    <div>
+      <span class="eyebrow">Вопросы</span>
+      <h2>Частые вопросы</h2>
+      <p class="lead">Не нашли ответ? Позвоните, подскажем за пару минут.</p>
+    </div>
+    <div>
+      <details open><summary>Сколько плитки брать с запасом?</summary><p>Обычно 5–10% на подрезку. Мы посчитаем точно, если пришлёте размеры или план участка.</p></details>
+      <details><summary>Какая толщина нужна под машину?</summary><p>Для дорожек хватит 6 см, для въезда и парковки берут 8 см <span class="ph">уточним</span></p></details>
+      <details><summary>Есть доставка? Сколько стоит?</summary><p>Да, по Пскову и области. Стоимость зависит от расстояния и объёма <span class="ph">цены доставки</span></p></details>
+      <details><summary>Можно забрать самому?</summary><p>Да, самовывоз с площадки на Карбышева, 26а, погрузим в вашу машину.</p></details>
+      <details><summary>Вы укладываете плитку?</summary><p>Подскажем проверенных мастеров <span class="ph">уточним</span></p></details>
+    </div>
+  </div>
+</section>
+
+<!-- 11. Финал -->
+<section id="kontakty" style="padding:0">
+  <div class="wrap">
+    <div class="final">
+      <div>
+        <h2>Узнайте цену на свой участок сегодня</h2>
+        <p>Пришлите площадь, и через 15 минут у вас будет расчёт с доставкой. Без звонков из колл-центров и рассылок.</p>
+        <div style="margin-top:26px"><a class="btn btn-white" href="#raschet">Рассчитать стоимость</a></div>
+      </div>
+      <div class="contacts">
+        <a href="tel:89212152643"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg><span><b>8 (921) 215-26-43</b><small>Пн–Сб 9:00–18:00</small></span></a>
+        <a href="#"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg><span><b>Написать в Telegram <span class="ph">ваш мессенджер</span></b><small>Ответим в рабочее время</small></span></a>
+        <a href="#"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-6.5-8-13a8 8 0 0 1 16 0c0 6.5-8 13-8 13z"/><circle cx="12" cy="9" r="3"/></svg><span><b>Псков, ул. Карбышева, 26а</b><small>Площадка с образцами</small></span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div><a class="logo" href="#"><img src="img/emblema-belaya.png" alt=""><div><b>МОНОЛИТ-ВЕСТ</b></div></a><p style="margin-top:14px">ООО «Монолит-Вест». Производство брусчатки и ЖБИ изделий в Пскове.</p></div>
+    <div><b>Брусчатка</b><a href="#">Кирпич</a><a href="#">Новый город</a><a href="#">Старый город</a><a href="#">Паркет</a></div>
+    <div><b>ЖБИ</b><a href="#">Кольца колодезные</a><a href="#">Бордюры</a><a href="#">Люки</a><a href="#">Блоки ФБС</a></div>
+    <div><b>Контакты</b><a href="tel:89212152643">8 (921) 215-26-43</a><a href="mailto:monolit-west@yandex.ru">monolit-west@yandex.ru</a><a href="#">Политика конфиденциальности</a></div>
+  </div>
+</footer>
+
+<div class="mbar">
+  <a class="btn btn-line" href="tel:89212152643">Позвонить</a>
+  <a class="btn btn-brand" href="#raschet">Рассчитать</a>
+</div>
+
+<script>
+(function(){
+  var area=document.getElementById('area'),out=document.getElementById('areaOut'),tot=document.getElementById('total'),kerb=document.getElementById('kerb'),price=1500;
+  var opts=document.querySelectorAll('#shape .opt');
+  opts.forEach(function(o,i){o.addEventListener('click',function(){opts.forEach(function(x){x.classList.remove('on')});o.classList.add('on');price=i===0?1500:+o.dataset.p;calc()})});
+  function calc(){var a=+area.value;out.textContent=a+' м²';var s=a*price*1.07;if(kerb.checked){s+=Math.round(Math.sqrt(a)*4)*310}tot.textContent='≈ '+(Math.round(s/500)*500).toLocaleString('ru-RU')+' ₽'}
+  try{var qa=+new URLSearchParams(location.search).get('area');if(qa>=5&&qa<=400)area.value=Math.round(qa/5)*5}catch(e){}
+  area.addEventListener('input',calc);kerb.addEventListener('change',calc);calc();
+
+  // маска телефона
+  var ph=document.getElementById('phone');
+  ph.addEventListener('input',function(){var d=ph.value.replace(/\D/g,'');if(d[0]==='8')d='7'+d.slice(1);if(d&&d[0]!=='7')d='7'+d;d=d.slice(0,11);var r='+7';if(d.length>1)r+=' ('+d.slice(1,4);if(d.length>=4)r+=') '+d.slice(4,7);if(d.length>=7)r+='-'+d.slice(7,9);if(d.length>=9)r+='-'+d.slice(9,11);ph.value=r});
+
+  // антиспам: ловушка, время заполнения, проверка номера
+  var t0=Date.now(),f=document.getElementById('calcForm');
+  f.addEventListener('submit',function(e){e.preventDefault();
+    var bot=f.website.value!==''||Date.now()-t0<3000;
+    var ok=ph.value.replace(/\D/g,'').length===11;
+    if(!ok){ph.style.borderColor='#c62828';ph.focus();return}
+    if(bot)return;
+    f.style.display='none';document.getElementById('sent').style.display='block'});
+})();
+</script>
+</body>
+</html>
