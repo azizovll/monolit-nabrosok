@@ -103,6 +103,7 @@
       var v = variant();
       $$('[data-color]', pf).forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-color') === cur.c.slug); });
       $('[data-pf-name]', pf).textContent = cur.c.name;
+      $('[data-pf-cval]', pf).innerHTML = '<b>' + cur.c.name + '</b> · ' + (cur.c.grp === 'mix' ? 'колормикс' : 'одноцветная');
       $('[data-pf-price]', pf).textContent = v.p ? fmt(v.p) + ' ₽' : 'по запросу';
       var thw = $('[data-pf-th-wrap]', pf), th = $('[data-pf-th]', pf);
       thw.hidden = cur.c.v.length < 2;

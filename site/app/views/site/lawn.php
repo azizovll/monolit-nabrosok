@@ -2,7 +2,7 @@
   <div class="wrap prod">
     <div class="prod-gal">
       <div class="prod-img"><?php if ($p && $p['images_a']): ?><?= picture($p['images_a'][0], 'Газонная решётка', '(max-width: 900px) 100vw, 520px', ['eager' => true]) ?>
-        <?php else: ?><div class="lawn-ill" role="img" aria-label="Иллюстрация газонной решётки"></div><?php endif; ?></div>
+        <?php else: ?><picture><source type="image/webp" srcset="<?= e(url('assets/img/gazon-ill.webp')) ?>"><img src="<?= e(url('assets/img/gazon-ill.jpg')) ?>" alt="Иллюстрация газонной решётки" width="800" height="600" style="width:100%;height:100%;object-fit:cover"></picture><?php endif; ?></div>
       <p class="muted small">Иллюстрация. Внешний вид продукции может отличаться, образцы смотрите на площадке.</p>
     </div>
     <div class="prod-info">

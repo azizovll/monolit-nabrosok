@@ -114,3 +114,27 @@ function swatch_css(array $palette): string {
     foreach ($palette as [$hex, $w]) { $a = $acc / $tot * 100; $acc += $w; $b = $acc / $tot * 100; $stops[] = "$hex " . round($a) . '% ' . round($b) . '%'; }
     return 'conic-gradient(from 20deg, ' . implode(', ', $stops) . ')';
 }
+
+/* короткая подписанная строка характеристик для списков: «Ø 100 см · высота 90 см · 600 кг» */
+function spec_line(array $p): string {
+    $s = fn($k) => spec($p, $k);
+    $num = fn($v) => preg_replace('~\s+~u', ' ', trim($v));
+    $out = [];
+    if ($s('Внутренний диаметр') !== '') {
+        $out[] = 'Ø ' . $num($s('Внутренний диаметр'));
+        if ($s('Высота') !== '') $out[] = 'высота ' . $num($s('Высота'));
+        if ($s('Толщина стенки') !== '') $out[] = 'стенка ' . $num($s('Толщина стенки'));
+        if ($s('Вес') !== '') $out[] = preg_replace_callback('~\d{4,}~', fn($m) => number_format((int)$m[0], 0, ',', ' '), $num($s('Вес')));
+    } elseif ($s('Размеры (Д×Ш×В)') !== '') {
+        $out[] = $s('Размеры (Д×Ш×В)');
+    } elseif ($s('Размеры') !== '') {
+        $out[] = str_replace(' см × ', '×', $num($s('Размеры')));
+        if ($s('Штук на поддоне') !== '') $out[] = $num($s('Штук на поддоне')) . ' на поддоне';
+    } elseif ($s('Класс нагрузки') !== '') {
+        preg_match_all('~([АВСD]\d+), до ([\d,]+ т)~u', $s('Класс нагрузки'), $m, PREG_SET_ORDER);
+        foreach ($m as $x) $out[] = $x[1] . ' (до ' . $x[2] . ')';
+    } elseif ($s('Высота') !== '') {
+        $out[] = 'высота ' . $num($s('Высота'));
+    }
+    return implode(' · ', $out);
+}

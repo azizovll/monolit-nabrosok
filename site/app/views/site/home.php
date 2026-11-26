@@ -92,7 +92,7 @@
       <?php foreach ($popular as $p): ?>
         <div class="prow">
           <a class="pname" href="<?= e(url($p['url'])) ?>"><?= e($p['name']) ?></a>
-          <span class="pspec"><?= e(implode(' · ', array_map(fn($s) => $s[1], array_slice($p['specs_a'], 0, 3)))) ?></span>
+          <span class="pspec"><?= e(spec_line($p)) ?></span>
           <?= price_html($p['price'] ? (int)$p['price'] : null, $p['price_unit']) ?>
           <button class="btn btn-line btn-sm" type="button" data-lead="product" data-product="<?= e($p['name']) ?>" data-qty="1">Заявка</button>
         </div>

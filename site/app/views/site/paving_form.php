@@ -18,19 +18,18 @@ $groups = ['mono' => 'Одноцветная', 'mix' => 'Колормикс'];
     <div class="pf-info">
       <h1>Брусчатка «<?= e($f['name']) ?>»</h1>
       <p class="lead"><?= e($f['short']) ?></p>
-      <div class="pf-price"><b data-pf-price><?= $v0['price'] ? number_format($v0['price'], 0, ',', ' ') . ' ₽' : 'по запросу' ?></b><span>/м²</span><span class="tag" data-pf-name><?= e($c0['name']) ?></span></div>
+      <div class="pf-price"><b data-pf-price><?= $v0['price'] ? number_format($v0['price'], 0, ',', ' ') . ' ₽' : 'по запросу' ?></b><span>/м²</span><span class="tag" data-pf-name><?= e($c0['name']) ?></span><span class="muted small"><?= e(price_date_text()) ?></span></div>
 
-      <?php foreach ($groups as $g => $gname): $list = array_filter($colors, fn($c) => $c['grp'] === $g); if (!$list) continue; ?>
-        <div class="f"><span><?= $gname ?></span>
-          <div class="sw-row">
-            <?php foreach ($list as $c): $p = min(array_filter(array_column($c['variants'], 'price')) ?: [0]); ?>
-              <button type="button" class="sw" data-color="<?= e($c['slug']) ?>" aria-pressed="<?= $c['slug'] === $c0['slug'] ? 'true' : 'false' ?>" title="<?= e($c['name']) ?>">
-                <i style="background:<?= e(swatch_css($c['palette'])) ?>"></i><span><?= e($c['name']) ?><small><?= $p ? number_format($p, 0, ',', ' ') . ' ₽' : '' ?></small></span>
-              </button>
-            <?php endforeach; ?>
-          </div>
+      <div class="f">
+        <div class="cb-head"><span class="cb-l">Цвет</span><span class="cb-val" data-pf-cval></span></div>
+        <div class="dots dots-lg">
+          <?php $prevG = null; foreach ($colors as $c): ?>
+            <?php if ($prevG !== null && $prevG !== $c['grp']): ?><span class="sep" aria-hidden="true"></span><?php endif; $prevG = $c['grp']; ?>
+            <button type="button" class="dot-b" data-color="<?= e($c['slug']) ?>" aria-pressed="<?= $c['slug'] === $c0['slug'] ? 'true' : 'false' ?>" title="<?= e($c['name']) ?>" aria-label="<?= e($c['name']) ?>" style="background:<?= e(swatch_css($c['palette'])) ?>"></button>
+          <?php endforeach; ?>
         </div>
-      <?php endforeach; ?>
+        <p class="dots-legend muted small">Слева одноцветная, справа колормикс: камни разного тона, как натуральный камень.</p>
+      </div>
       <div class="f" data-pf-th-wrap hidden><span>Толщина</span><div class="seg" data-pf-th></div></div>
 
       <div class="mini-calc">
@@ -43,7 +42,7 @@ $groups = ['mono' => 'Одноцветная', 'mix' => 'Колормикс'];
         <a class="btn btn-line" data-pf-3d href="<?= e(url('3d/?forma=' . $f['slug'] . '&cvet=' . $c0['slug'])) ?>">Примерить в 3D</a>
       </div>
       <?= render('site/_disc') ?>
-      <ul class="ticks small"><li>Привезём и выгрузим манипулятором</li><li>Образцы всех цветов на площадке</li><li><?= e(price_date_text()) ?></li></ul>
+      <ul class="ticks small"><li>Привезём и выгрузим манипулятором</li><li>Образцы всех цветов на площадке</li><li>Посчитаем бордюр и запас бесплатно</li></ul>
     </div>
   </div>
   <script type="application/json" data-pf-data><?= json_encode($data, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_UNESCAPED_SLASHES) ?></script>

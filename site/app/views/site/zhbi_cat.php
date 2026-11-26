@@ -23,7 +23,7 @@ ksort($diams);
           <div class="prow" data-diam="<?= e($d) ?>">
             <a class="pthumb" href="<?= e(url($p['url'])) ?>"><?= picture($p['images_a'][0] ?? null, $p['name'], '80px') ?></a>
             <a class="pname" href="<?= e(url($p['url'])) ?>"><?= e($p['name']) ?></a>
-            <span class="pspec"><?= e(implode(' · ', array_map(fn($s) => $s[1], array_slice($p['specs_a'], 0, 4)))) ?></span>
+            <span class="pspec"><?= e(spec_line($p)) ?></span>
             <?= price_html($p['price'] ? (int)$p['price'] : null, $p['price_unit']) ?>
             <button class="btn btn-line btn-sm" type="button" data-lead="product" data-product="<?= e($p['name']) ?>" data-qty="1"><?= $p['price'] ? 'Заявка' : 'Узнать цену' ?></button>
           </div>

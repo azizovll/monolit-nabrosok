@@ -45,7 +45,7 @@
     <h2>Похожие</h2>
     <div class="ptable">
       <?php foreach ($siblings as $s): ?>
-        <div class="prow"><a class="pname" href="<?= e(url($s['url'])) ?>"><?= e($s['name']) ?></a><span class="pspec"><?= e(implode(' · ', array_map(fn($x) => $x[1], array_slice($s['specs_a'], 0, 3)))) ?></span><?= price_html($s['price'] ? (int)$s['price'] : null, $s['price_unit']) ?></div>
+        <div class="prow"><a class="pname" href="<?= e(url($s['url'])) ?>"><?= e($s['name']) ?></a><span class="pspec"><?= e(spec_line($s)) ?></span><?= price_html($s['price'] ? (int)$s['price'] : null, $s['price_unit']) ?></div>
       <?php endforeach; ?>
     </div>
   </div>
