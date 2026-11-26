@@ -11,3 +11,9 @@ CLAUDE.md
 # внутренние документы и исходники фото (репозиторий публичный)
 TZ.md
 data/products/
+
+# новый сайт: база, кэш, логи, загруженные фото и секреты не храним в git
+site/data/*
+!site/data/.htaccess
+site/uploads/
+site/app/config.local.php

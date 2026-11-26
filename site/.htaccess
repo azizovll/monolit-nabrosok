@@ -1,0 +1,50 @@
+# Монолит-Вест. Работает и в /new/, и в корне домена: пути внутри относительные.
+Options -Indexes
+DirectoryIndex index.php
+AddDefaultCharset UTF-8
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # служебные папки и файлы закрыты от веба
+  RewriteRule ^(app|data)(/|$) - [F,L]
+  RewriteRule (^|/)\. - [F,L]
+
+  # существующие файлы (картинки, стили, скрипты) отдаёт сам Apache
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteRule ^ - [L]
+
+  # всё остальное: страницы сайта и админка
+  RewriteRule ^ index.php [L,QSA]
+</IfModule>
+
+<FilesMatch "\.(sqlite|sqlite-journal|db|log|json|sql|md|sh|ini|lock|bak)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+</FilesMatch>
+# метаданные картинок (*.json рядом с фото) нужны только серверу; manifest и т.п. разрешим точечно при необходимости
+
+<IfModule mod_mime.c>
+  AddType application/javascript .js .mjs
+  AddType image/webp .webp
+  AddType application/octet-stream .hdr
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType application/octet-stream "access plus 7 days"
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+</IfModule>
