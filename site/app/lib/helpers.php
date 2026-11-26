@@ -148,3 +148,31 @@ function flash(?string $msg = null, string $type = 'ok') {
 function log_line(string $file, string $line): void {
     @file_put_contents(DATA_DIR . '/logs/' . $file, '[' . now() . '] ' . $line . "\n", FILE_APPEND | LOCK_EX);
 }
+
+/* Простая разметка для текстов из админки: ## заголовок, ### подзаголовок, - список, **жирный**, [текст](ссылка), пустая строка = новый абзац */
+function md(string $s): string {
+    $s = str_replace("\r\n", "\n", trim($s));
+    if ($s === '') return '';
+    if (preg_match('~^\s*<(p|h2|h3|ul|ol|div)[\s>]~i', $s)) return $s;   // уже HTML (например, политика со старого сайта)
+    $inline = function (string $t): string {
+        $t = e($t);
+        $t = preg_replace('~\*\*(.+?)\*\*~u', '<strong>$1</strong>', $t);
+        $t = preg_replace_callback('~\[([^\]]+)\]\(((?:https?://|/|tel:|mailto:)[^)\s]+)\)~u', fn($m) => '<a href="' . (str_starts_with($m[2], '/') ? e(url($m[2])) : $m[2]) . '">' . $m[1] . '</a>', $t);
+        return $t;
+    };
+    $out = '';
+    foreach (preg_split("~\n{2,}~", $s) as $block) {
+        $lines = explode("\n", trim($block));
+        $buf = [];
+        $flush = function () use (&$buf, &$out, $inline) { if ($buf) { $out .= '<p>' . implode('<br>', array_map($inline, $buf)) . "</p>\n"; $buf = []; } };
+        $list = [];
+        $flushList = function () use (&$list, &$out, $inline) { if ($list) { $out .= '<ul>' . implode('', array_map(fn($x) => '<li>' . $inline($x) . '</li>', $list)) . "</ul>\n"; $list = []; } };
+        foreach ($lines as $ln) {
+            if (preg_match('~^(#{2,3})\s+(.+)$~u', $ln, $m)) { $flush(); $flushList(); $h = strlen($m[1]); $out .= "<h$h>" . $inline($m[2]) . "</h$h>\n"; }
+            elseif (preg_match('~^[-•*]\s+(.+)$~u', $ln, $m)) { $flush(); $list[] = $m[1]; }
+            else { $flushList(); $buf[] = $ln; }
+        }
+        $flush(); $flushList();
+    }
+    return $out;
+}

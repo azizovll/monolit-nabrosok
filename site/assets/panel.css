@@ -119,3 +119,4 @@ textarea{resize:vertical}
 /* телефон: колонка цвета закреплена при прокрутке таблицы цен */
 .matrix th.color{position:sticky;left:0;z-index:2;box-shadow:1px 0 0 var(--line)}
 .matrix thead th:first-child{position:sticky;left:0;z-index:3}
+.faq-row hr{border:0;border-top:1px dashed var(--line);margin:6px 0 14px}

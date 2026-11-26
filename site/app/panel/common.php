@@ -10,6 +10,7 @@ function panel_page(string $title, string $body, string $active = ''): void {
         'paving'   => 'Брусчатка',
         'products' => 'Товары',
         'leads'    => 'Заявки' . ($newLeads ? ' <b class="badge">' . $newLeads . '</b>' : ''),
+        'content'  => 'Тексты',
         'settings' => 'Настройки',
         'log'      => 'Журнал',
     ];

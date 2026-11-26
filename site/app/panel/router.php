@@ -7,6 +7,7 @@ require __DIR__ . '/products.php';
 require __DIR__ . '/paving.php';
 require __DIR__ . '/leads.php';
 require __DIR__ . '/settings.php';
+require __DIR__ . '/content.php';
 
 function panel_route(array $s): void {
     header('X-Robots-Tag: noindex, nofollow');
@@ -32,6 +33,7 @@ function panel_route(array $s): void {
         $a === 'leads' && !isset($s[1])             => leads_list(),
         $a === 'leads' && ($s[1] ?? '') === 'export' => leads_export(),
         $a === 'leads' && $id                       => lead_view($id),
+        $a === 'content'                            => content_page(array_slice($s, 1)),
         $a === 'settings'                           => settings_page(),
         $a === 'account'                            => account_page($u),
         $a === 'users'                              => users_page(panel_require('admin')),

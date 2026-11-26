@@ -238,6 +238,12 @@ foreach ($catalog as $p) {
 }
 foreach ($formImg as $fid => $img) update('paving_forms', ['images' => jenc([$img])], 'id = ?', [$fid]);
 
+/* ---------- тексты по умолчанию ---------- */
+require APP_DIR . '/site/content.php';
+foreach (CONTENT_FORMS as $slug => $t) update('paving_forms', $t, 'slug = ?', [$slug]);
+foreach (CONTENT_CATS as $slug => $t) update('categories', $t, 'slug = ?', [$slug]);
+foreach (CONTENT_FAQ as $scope => $list) foreach ($list as $i => [$qq, $aa]) insert('faq', ['scope' => $scope, 'q' => $qq, 'a' => $aa, 'sort' => $i * 10]);
+
 /* ---------- страницы ---------- */
 $old = json_decode(file_get_contents("$src/old-pages.json"), true);
 $privacy = '';
@@ -246,8 +252,8 @@ $privacy = strip_tags($privacy, '<p><h2><h3><h4><ul><ol><li><strong><b><em><br>'
 $privacy = preg_replace('~\s(class|style|id)="[^"]*"~', '', $privacy);
 foreach ([
     ['politika', 'Политика конфиденциальности', $privacy],
-    ['dostavka', 'Доставка и оплата', ''],
-    ['o-kompanii', 'О компании', ''],
+    ['dostavka', 'Доставка и оплата', CONTENT_PAGES['dostavka']],
+    ['o-kompanii', 'О компании', CONTENT_PAGES['o-kompanii']],
     ['kontakty', 'Контакты', ''],
 ] as [$slug, $title, $body]) insert('pages', ['slug' => $slug, 'title' => $title, 'h1' => $title, 'body' => $body, 'updated_at' => now()]);
 
