@@ -4,3 +4,10 @@ node_modules
 Thumbs.db
 CLAUDE.md
 .claude/
+
+.vercel
+.env*
+
+# внутренние документы и исходники фото (репозиторий публичный)
+TZ.md
+data/products/

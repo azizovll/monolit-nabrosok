@@ -1,0 +1,22 @@
+# Черновик нового сайта в /new/: не индексировать, кэшировать статику.
+# Всё в <IfModule>, чтобы при отсутствии модуля не было ошибки 500.
+
+DirectoryIndex index.html
+
+<IfModule mod_headers.c>
+  Header set X-Robots-Tag "noindex, nofollow"
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType application/javascript .js .mjs
+  AddType application/octet-stream .hdr
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType application/octet-stream "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
