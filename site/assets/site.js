@@ -137,40 +137,54 @@
     renderPf(want && cur.c.slug === want && cur.c !== D.colors[0]);
   }
 
-  /* калькулятор */
+  /* калькулятор: форма, цвет, толщина, запас и площадь выбираются касанием */
   $$('[data-calc]').forEach(function (box) {
-    var D = JSON.parse($('[data-c-data]', box).textContent), st = { f: 0, c: 0, t: null };
-    var fSel = $('[data-c-form]', box), area = $('[data-c-area]', box), res = $('[data-c-reserve]', box);
-    function colors() { return D[st.f].colors; }
-    function v() { var c = colors()[st.c], x = c.v.filter(function (q) { return q.t === st.t; })[0]; return x || c.v[0]; }
+    var D = JSON.parse($('[data-c-data]', box).textContent), st = { f: 0, c: 0, t: null, r: 7, a: 40 };
+    var range = $('[data-c-area]', box), num = $('[data-c-area-num]', box);
+    var colors = function () { return D[st.f].colors; };
+    var v = function () { var c = colors()[st.c], x = c.v.filter(function (q) { return q.t === st.t; })[0]; return x || c.v[0]; };
+    var plural = function (n, a, b, c) { n = Math.abs(n) % 100; var n1 = n % 10; return n > 10 && n < 20 ? c : n1 > 1 && n1 < 5 ? b : n1 === 1 ? a : c; };
+    function press(sel, attr, val) { $$(sel, box).forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute(attr)) === String(val)); }); }
     function drawColors() {
-      $('[data-c-colors]', box).innerHTML = colors().map(function (c, i) {
-        var p = Math.min.apply(null, c.v.map(function (q) { return q.p || 1e9; }));
-        return '<button type="button" class="sw" data-ci="' + i + '" aria-pressed="' + (i === st.c) + '"><i style="background:' + c.sw + '"></i><span>' + c.name + '<small>' + (p < 1e9 ? fmt(p) + ' ₽' : '') + '</small></span></button>';
-      }).join('');
-      var c = colors()[st.c]; if (!c.v.some(function (q) { return q.t === st.t; })) st.t = c.v[0].t;
-      $('[data-c-th-wrap]', box).hidden = c.v.length < 2;
+      var list = colors(), prev = null, h = '';
+      list.forEach(function (c, i) {
+        if (prev && prev !== c.grp) h += '<span class="sep" aria-hidden="true"></span>';
+        prev = c.grp;
+        h += '<button type="button" class="dot-b" data-ci="' + i + '" aria-pressed="' + (i === st.c) + '" title="' + c.name + '" aria-label="' + c.name + '" style="background:' + c.sw + '"></button>';
+      });
+      $('[data-c-colors]', box).innerHTML = h;
+      var c = list[st.c];
+      if (!c.v.some(function (q) { return q.t === st.t; })) st.t = c.v[0].t;
       $('[data-c-th]', box).innerHTML = c.v.map(function (q) { return '<button type="button" data-ct="' + q.t + '" aria-pressed="' + (q.t === st.t) + '">' + q.t + ' мм</button>'; }).join('');
     }
     function calc() {
-      var a = +area.value, m2 = a * (1 + (+res.value) / 100), f = D[st.f], x = v();
-      $('[data-c-area-out]', box).textContent = a + ' м²';
+      var f = D[st.f], c = colors()[st.c], x = v(), m2 = st.a * (1 + st.r / 100), pal = f.m2 ? Math.ceil(m2 / f.m2) : 0;
+      $('[data-c-cname]', box).innerHTML = '<b>' + c.name + '</b> · ' + (x.p ? fmt(x.p) + ' ₽/м²' : 'цена по запросу') + ' · ' + (c.grp === 'mix' ? 'колормикс' : 'одноцветная');
       $('[data-c-m2]', box).textContent = (Math.round(m2 * 10) / 10).toLocaleString('ru-RU') + ' м²';
-      var pal = f.m2 ? Math.ceil(m2 / f.m2) : 0;
-      $('[data-c-pal]', box).textContent = pal || '—';
+      $('[data-c-pal]', box).textContent = pal ? pal + ' ' + plural(pal, 'поддон', 'поддона', 'поддонов') : '—';
       $('[data-c-kg]', box).textContent = f.kg ? (Math.round(pal * f.kg / 100) / 10).toLocaleString('ru-RU') + ' т' : '—';
       $('[data-c-total]', box).textContent = x.p ? '≈ ' + fmt(Math.round(m2 * x.p / 500) * 500) + ' ₽' : 'по запросу';
-      return { a: a, m2: m2, x: x };
+      return { m2: m2, x: x };
     }
-    fSel.addEventListener('change', function () { st.f = +fSel.value; st.c = 0; drawColors(); calc(); });
+    function setArea(val, from) {
+      st.a = Math.max(1, Math.min(2000, Math.round(+val) || 1));
+      if (from !== 'num') num.value = st.a;
+      if (from !== 'range') range.value = Math.min(400, st.a);
+      calc();
+    }
     box.addEventListener('click', function (e) {
-      var b = e.target.closest('[data-ci]'); if (b) { st.c = +b.getAttribute('data-ci'); drawColors(); calc(); }
-      var t = e.target.closest('[data-ct]'); if (t) { st.t = +t.getAttribute('data-ct'); drawColors(); calc(); }
+      var t;
+      if ((t = e.target.closest('[data-fi]'))) { st.f = +t.getAttribute('data-fi'); st.c = 0; press('[data-fi]', 'data-fi', st.f); drawColors(); calc(); }
+      else if ((t = e.target.closest('[data-ci]'))) { st.c = +t.getAttribute('data-ci'); drawColors(); calc(); }
+      else if ((t = e.target.closest('[data-ct]'))) { st.t = +t.getAttribute('data-ct'); drawColors(); calc(); }
+      else if ((t = e.target.closest('[data-r]'))) { st.r = +t.getAttribute('data-r'); press('[data-r]', 'data-r', st.r); calc(); }
     });
-    area.addEventListener('input', calc); res.addEventListener('change', calc);
+    range.addEventListener('input', function () { setArea(range.value, 'range'); });
+    num.addEventListener('input', function () { if (num.value !== '') setArea(num.value, 'num'); });
+    num.addEventListener('blur', function () { setArea(num.value || 1); });
     $('[data-c-lead]', box).addEventListener('click', function () {
       var r = calc(), f = D[st.f], c = colors()[st.c];
-      openLead({ type: 'calc', title: 'Точный расчёт с доставкой', form: f.name, color: c.name, thickness: r.x.t, area: r.a, total: r.x.p ? Math.round(r.m2 * r.x.p / 500) * 500 : '' });
+      openLead({ type: 'calc', title: 'Точный расчёт с доставкой', form: f.name, color: c.name, thickness: r.x.t, area: st.a, total: r.x.p ? Math.round(r.m2 * r.x.p / 500) * 500 : '' });
     });
     drawColors(); calc();
   });

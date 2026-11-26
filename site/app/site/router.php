@@ -52,7 +52,7 @@ function page_cache_key(string $uri): ?string {
     $q = $_GET;
     foreach (array_keys($q) as $k) if (str_starts_with($k, 'utm_') || in_array($k, ['yclid', 'cvet', 'th'], true)) unset($q[$k]);
     if ($q) return null;
-    return DATA_DIR . '/cache/' . md5($uri) . '.html';
+    return DATA_DIR . '/cache/' . md5(APP_VERSION . '|' . $uri) . '.html';
 }
 function page_cache_get(string $uri): bool {
     $f = page_cache_key($uri);

@@ -27,6 +27,9 @@ foreach ([DATA_DIR, DATA_DIR . '/logs', DATA_DIR . '/cache', DATA_DIR . '/backup
     if (!is_dir($d)) @mkdir($d, 0775, true);
 }
 
+// версия кода: меняется при каждой заливке, от неё зависит ключ кэша страниц
+define('APP_VERSION', (string)(@include APP_DIR . '/version.php') ?: 'dev');
+
 require APP_DIR . '/lib/helpers.php';
 require APP_DIR . '/lib/db.php';
 require APP_DIR . '/lib/images.php';
