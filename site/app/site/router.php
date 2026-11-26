@@ -36,6 +36,7 @@ function site_route(array $seg, string $uri): void {
         $a === 'kontakty' && $n === 1               => page_contacts(),
         $a === 'politika' && $n === 1               => page_privacy(),
         $a === 'spasibo' && $n === 1                => page_thanks(),
+        $a === '3d' && $n === 1                     => page_3d(),
         default                                     => false,
     };
     $html = ob_get_clean();

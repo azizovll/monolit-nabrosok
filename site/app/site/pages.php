@@ -148,6 +148,17 @@ function page_about() { return page_info('o-kompanii', 'О компании', '�
 function page_contacts() { return page_info('kontakty', 'Контакты', 'Телефон 8 (921) 215-26-43, Псков, ул. Карбышева, 26а. Площадка с образцами брусчатки, Пн–Сб 9:00–18:00.', 'contacts'); }
 function page_privacy() { return page_info('politika', 'Политика конфиденциальности', 'Политика обработки персональных данных ООО «Монолит-Вест».'); }
 
+/* 3D-примерочная: пока текущая версия, полная (фасад, крыша, забор, рисование зон) на шаге 6.
+   <base> нужен, чтобы относительные пути (3d-assets/, vendor/) работали с адреса /3d/ */
+function page_3d() {
+    $html = file_get_contents(APP_DIR . '/views/legacy3d.html');
+    $html = str_replace('<head>', '<head>' . "
+" . '<base href="' . e(base_path()) . '/">', $html);
+    header('Content-Type: text/html; charset=utf-8');
+    echo $html;
+    return true;
+}
+
 function page_thanks() {
     return site_page('thanks', [], ['title' => 'Заявка отправлена', 'noindex' => true]);
 }
