@@ -111,7 +111,8 @@
       if (swapImg && v.img) {
         var box = $('[data-pf-img]', pf), img = $('img', box), srcEl = $('source', box);
         box.classList.add('swap');
-        var n = new Image(); n.onload = function () { if (srcEl) srcEl.srcset = v.img.webp; img.srcset = ''; img.src = v.img.jpg; img.alt = 'Брусчатка ' + D.form + ' ' + cur.c.name; box.classList.remove('swap'); };
+        var token = (pf._imgTok = (pf._imgTok || 0) + 1);
+        var n = new Image(); n.onload = function () { if (token !== pf._imgTok) return; if (srcEl) srcEl.srcset = v.img.webp; img.srcset = ''; img.src = v.img.jpg; img.alt = 'Брусчатка ' + D.form + ' ' + cur.c.name; box.classList.remove('swap'); };
         n.src = v.img.jpg;
       }
       var a3 = $('[data-pf-3d]', pf); if (a3) a3.href = MW.base + '/3d/?forma=' + D.slug + '&cvet=' + cur.c.slug;
