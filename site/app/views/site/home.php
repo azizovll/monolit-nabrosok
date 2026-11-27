@@ -45,7 +45,7 @@
     </div>
     <div class="cards4">
       <?php foreach ($forms as $f): $img = jdec($f['images'])[0] ?? ''; ?>
-        <a class="card-p" href="<?= e(url($f['url'])) ?>">
+        <a class="card-p card-pave" href="<?= e(url($f['url'])) ?>">
           <div class="pic"><?= picture($img, 'Брусчатка ' . $f['name'], '(max-width: 700px) 50vw, 300px') ?></div>
           <div class="body"><h3>«<?= e($f['name']) ?>»</h3><p class="meta"><?= $f['colors_n'] ?> <?= plural($f['colors_n'], 'цвет', 'цвета', 'цветов') ?> · <?= e(implode(', ', array_map(fn($x) => $x[0] . '×' . $x[1], jdec($f['elements'])))) ?> мм</p>
             <div class="foot"><span class="price"><small>от</small> <?= number_format($f['min_price'], 0, ',', ' ') ?> ₽<small>/м²</small></span><span class="go">Подобрать цвет →</span></div></div>

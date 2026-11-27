@@ -71,7 +71,7 @@ $groups = ['mono' => 'Одноцветная', 'mix' => 'Колормикс'];
     <h2>Другие формы</h2>
     <div class="cards4 cards3">
       <?php foreach ($others as $o): ?>
-        <a class="card-p" href="<?= e(url($o['url'])) ?>"><div class="pic"><?= picture(jdec($o['images'])[0] ?? '', 'Брусчатка ' . $o['name'], '(max-width: 700px) 50vw, 300px') ?></div>
+        <a class="card-p card-pave" href="<?= e(url($o['url'])) ?>"><div class="pic"><?= picture(jdec($o['images'])[0] ?? '', 'Брусчатка ' . $o['name'], '(max-width: 700px) 50vw, 300px') ?></div>
           <div class="body"><h3>«<?= e($o['name']) ?>»</h3><div class="foot"><span class="price"><small>от</small> <?= number_format($o['min_price'], 0, ',', ' ') ?> ₽<small>/м²</small></span></div></div></a>
       <?php endforeach; ?>
     </div>

@@ -408,3 +408,13 @@ details[open] summary::after{transform:rotate(45deg)}
   .mbar{animation:mbar .6s 1s cubic-bezier(.2,.7,.2,1) both}@keyframes mbar{from{transform:translateY(110%)}}
   .modal[open]{animation:pop .3s cubic-bezier(.2,.7,.2,1)}@keyframes pop{from{opacity:0;transform:translateY(16px) scale(.98)}}
 }
+
+/* фото брусчатки вертикальные 2:3, как на старом сайте (пожелание заказчика) */
+.card-pave .pic{aspect-ratio:2/3}
+.pf-in{grid-template-columns:.8fr 1.2fr}
+.pf-img{aspect-ratio:2/3}
+.form-row{grid-template-columns:300px 1fr}
+.form-row .pic{aspect-ratio:2/3}
+.pf-img img,.card-pave .pic img,.form-row .pic img{object-position:center}
+@media(max-width:900px){.pf-in{grid-template-columns:1fr}.pf-img{aspect-ratio:2/3;max-width:420px;margin:0 auto}}
+@media(max-width:860px){.form-row{grid-template-columns:1fr}.form-row .pic{aspect-ratio:2/3;max-height:none}}
