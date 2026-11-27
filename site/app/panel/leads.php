@@ -33,6 +33,15 @@ function lead_view(int $id): void {
     panel_page('Заявка №' . $id, render('panel/lead_view', ['l' => $l]), 'leads');
 }
 
+function lead_shot(int $id): void {
+    $f = DATA_DIR . '/leads/' . $id . '.jpg';
+    if (!is_file($f)) { panel_404(); return; }
+    header('Content-Type: image/jpeg');
+    header('Content-Length: ' . filesize($f));
+    readfile($f);
+    exit;
+}
+
 /* CSV для Excel: точка с запятой и BOM, чтобы кириллица открылась без настроек */
 function leads_export(): void {
     header('Content-Type: text/csv; charset=utf-8');
@@ -67,5 +76,5 @@ function lead_source(array $l): string {
 const LEAD_FIELDS = [
     'product' => 'Товар', 'qty' => 'Количество', 'form' => 'Форма', 'color' => 'Цвет', 'thickness' => 'Толщина', 'area' => 'Площадь, м²',
     'kerb' => 'Бордюр', 'address' => 'Адрес', 'delivery' => 'Доставка', 'comment' => 'Комментарий', 'topic' => 'Тема', 'total' => 'Сумма, ₽',
-    'project' => 'Проект', 'link' => 'Ссылка на проект',
+    'project' => 'Проект', 'link' => 'Ссылка на проект', 'image' => 'Картинка проекта',
 ];

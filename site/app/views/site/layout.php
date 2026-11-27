@@ -81,7 +81,7 @@ $draft = setting('noindex', '1') === '1';
     </div>
   </div>
   <div class="wrap ftr-b">
-    <p class="disc-f"><?= e(setting('disclaimer_short')) ?> Информация на сайте не является публичной офертой, цены и наличие уточняйте у менеджера.</p>
+    <p class="disc-f"><?= setting('disclaimer_pages', '1') === '1' ? e(setting('disclaimer_short')) . ' ' : '' ?>Информация на сайте не является публичной офертой, цены и наличие уточняйте у менеджера.</p>
     <p>© <?= date('Y') ?> <?= e(setting('company')) ?> · <a href="<?= e(url('politika/')) ?>">Политика конфиденциальности</a></p>
   </div>
 </footer>

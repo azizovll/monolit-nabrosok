@@ -148,15 +148,31 @@ function page_about() { return page_info('o-kompanii', 'О компании', '�
 function page_contacts() { return page_info('kontakty', 'Контакты', 'Телефон 8 (921) 215-26-43, Псков, ул. Карбышева, 26а. Площадка с образцами брусчатки, Пн–Сб 9:00–18:00.', 'contacts'); }
 function page_privacy() { return page_info('politika', 'Политика конфиденциальности', 'Политика обработки персональных данных ООО «Монолит-Вест».'); }
 
-/* 3D-примерочная: пока текущая версия, полная (фасад, крыша, забор, рисование зон) на шаге 6.
-   <base> нужен, чтобы относительные пути (3d-assets/, vendor/) работали с адреса /3d/ */
+/* 3D-примерочная: данные каталога из базы (формы, цвета, цены, бордюры, газонная решётка) */
+function tryon_data(): array {
+    $forms = [];
+    foreach (forms_all() as $f) $forms[] = ['slug' => $f['slug'], 'name' => $f['name'], 'el' => jdec($f['elements']), 'm2' => (float)$f['m2_per_pallet'], 'url' => url($f['url'])];
+    $colors = [];
+    foreach (colors_all() as $c) $colors[$c['slug']] = ['name' => $c['name'], 'grp' => $c['grp'], 'pal' => jdec($c['palette'])];
+    $prices = [];
+    foreach (rows('SELECT f.slug fs, c.slug cs, p.thickness, p.price FROM paving_prices p JOIN paving_forms f ON f.id = p.form_id JOIN paving_colors c ON c.id = p.color_id WHERE f.visible = 1 ORDER BY c.sort, p.thickness') as $r)
+        $prices[$r['fs']][$r['cs']][(string)$r['thickness']] = $r['price'] === null ? null : (int)$r['price'];
+    $kerbs = [];
+    foreach (rows("SELECT p.slug, p.name, p.price, p.specs FROM products p JOIN categories c ON c.id = p.category_id WHERE c.slug = 'bordyury' AND p.visible = 1 ORDER BY p.price") as $k)
+        $kerbs[] = ['slug' => $k['slug'], 'name' => $k['name'], 'price' => $k['price'] === null ? null : (int)$k['price'], 'len' => 1.0];
+    $lawn = row("SELECT p.name, p.price, p.price_unit FROM products p JOIN categories c ON c.id = p.category_id WHERE c.kind = 'lawn' AND p.visible = 1 ORDER BY p.sort LIMIT 1");
+    return [
+        'base' => base_path(), 'forms' => $forms, 'colors' => $colors, 'prices' => $prices, 'kerbs' => $kerbs,
+        'lawn' => $lawn ? ['name' => $lawn['name'], 'price' => $lawn['price'] === null ? null : (int)$lawn['price'], 'unit' => $lawn['price_unit']] : null,
+        'disclaimer' => setting('disclaimer'), 'phone' => setting('phone'), 'brand' => setting('brand'), 'site' => abs_url('/'),
+    ];
+}
+
 function page_3d() {
-    $html = file_get_contents(APP_DIR . '/views/legacy3d.html');
-    $html = str_replace('<head>', '<head>' . "
-" . '<base href="' . e(base_path()) . '/">', $html);
-    header('Content-Type: text/html; charset=utf-8');
-    echo $html;
-    return true;
+    return site_page('tryon', ['data' => tryon_data()], [
+        'title' => '3D-примерочная брусчатки: подберите плитку к своему дому',
+        'description' => 'Выберите дом, цвет фасада, крыши и забора, нарисуйте дорожки и площадки и примерьте брусчатку «Монолит-Вест» в 3D. Смета сразу, проект можно отправить менеджеру.',
+    ]);
 }
 
 function page_thanks() {

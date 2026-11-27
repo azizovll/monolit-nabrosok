@@ -32,6 +32,7 @@ function panel_route(array $s): void {
         $a === 'paving' && ($s[1] ?? '') === 'colors' => paving_colors_edit(),
         $a === 'leads' && !isset($s[1])             => leads_list(),
         $a === 'leads' && ($s[1] ?? '') === 'export' => leads_export(),
+        $a === 'leads' && $id && ($s[2] ?? '') === 'shot' => lead_shot($id),
         $a === 'leads' && $id                       => lead_view($id),
         $a === 'content'                            => content_page(array_slice($s, 1)),
         $a === 'settings'                           => settings_page(),

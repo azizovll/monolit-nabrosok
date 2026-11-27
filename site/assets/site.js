@@ -43,7 +43,7 @@
   function openLead(o) {
     if (!dlg) return;
     form.reset();
-    ['product', 'form', 'color', 'thickness', 'area', 'total'].forEach(function (k) { form[k].value = o[k] || ''; });
+    ['product', 'form', 'color', 'thickness', 'area', 'total', 'project', 'link', 'shot'].forEach(function (k) { if (form[k]) form[k].value = o[k] || ''; });
     form.type.value = o.type || 'callback';
     $('[data-lead-title]', dlg).textContent = o.title || (o.type === 'product' ? 'Заявка на товар' : 'Оставить заявку');
     $('[data-lead-sub]', dlg).textContent = o.sub || 'Перезвоним в течение 15 минут в рабочее время и посчитаем стоимость с доставкой.';
@@ -52,7 +52,7 @@
     $('[data-qty]', dlg).hidden = o.type !== 'product';
     if (o.qty && o.type === 'product') form.qty.value = '';
     $('[data-err]', dlg).hidden = true;
-    $('[data-submit]', dlg).textContent = o.type === 'product' ? 'Отправить заявку' : 'Получить расчёт';
+    $('[data-submit]', dlg).textContent = o.type === 'product' ? 'Отправить заявку' : o.type === 'project3d' ? 'Отправить проект' : 'Получить расчёт';
     if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
     setTimeout(function () { form.phone.focus(); }, 60);
     goal('lead_open', { type: form.type.value });

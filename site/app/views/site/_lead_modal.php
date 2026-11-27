@@ -5,7 +5,7 @@
     <p class="muted" data-lead-sub>Перезвоним в течение 15 минут в рабочее время и посчитаем стоимость с доставкой.</p>
     <div class="lead-what" data-lead-what hidden></div>
     <input type="hidden" name="type" value="callback">
-    <input type="hidden" name="product"><input type="hidden" name="form"><input type="hidden" name="color"><input type="hidden" name="thickness"><input type="hidden" name="area"><input type="hidden" name="total">
+    <input type="hidden" name="product"><input type="hidden" name="form"><input type="hidden" name="color"><input type="hidden" name="thickness"><input type="hidden" name="area"><input type="hidden" name="total"><input type="hidden" name="project"><input type="hidden" name="link"><input type="hidden" name="shot">
     <label class="f"><span>Телефон *</span><input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" required></label>
     <label class="f"><span>Имя</span><input name="name" autocomplete="name" placeholder="Как к вам обращаться"></label>
     <label class="f" data-qty hidden><span>Количество</span><input name="qty" inputmode="numeric" placeholder="Например, 4 шт или 60 м²"></label>

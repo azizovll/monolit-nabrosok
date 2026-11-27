@@ -13,7 +13,7 @@ $groups = ['mono' => 'Одноцветная', 'mix' => 'Колормикс'];
   <div class="wrap pf-in">
     <div class="pf-gal">
       <div class="pf-img" data-pf-img><?= picture($img0, 'Брусчатка ' . $f['name'] . ' ' . $c0['name'], '(max-width: 900px) 100vw, 560px', ['eager' => true]) ?></div>
-      <p class="muted small">Фото образца. <?= e(setting('disclaimer_short')) ?></p>
+      <p class="muted small">Фото образца.<?= setting('disclaimer_pages', '1') === '1' ? ' ' . e(setting('disclaimer_short')) : '' ?></p>
     </div>
     <div class="pf-info">
       <h1>Брусчатка «<?= e($f['name']) ?>»</h1>

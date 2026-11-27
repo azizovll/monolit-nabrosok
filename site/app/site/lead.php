@@ -2,9 +2,9 @@
 declare(strict_types=1);
 
 const LEAD_TYPES_PUBLIC = ['callback' => 'Обратный звонок', 'paving' => 'Расчёт брусчатки', 'product' => 'Заявка на товар', 'project3d' => 'Проект из 3D', 'contact' => 'Обратная связь', 'calc' => 'Калькулятор'];
-const LEAD_KEYS = ['product', 'qty', 'form', 'color', 'thickness', 'area', 'kerb', 'address', 'delivery', 'comment', 'topic', 'total', 'project', 'link'];
+const LEAD_KEYS = ['product', 'qty', 'form', 'color', 'thickness', 'area', 'kerb', 'address', 'delivery', 'comment', 'topic', 'total', 'project', 'link', 'image'];
 const LEAD_LABELS = ['product' => 'Товар', 'qty' => 'Количество', 'form' => 'Форма', 'color' => 'Цвет', 'thickness' => 'Толщина', 'area' => 'Площадь, м²',
-    'kerb' => 'Бордюр', 'address' => 'Адрес', 'delivery' => 'Доставка', 'comment' => 'Комментарий', 'topic' => 'Тема', 'total' => 'Ориентировочно, ₽', 'project' => 'Проект', 'link' => 'Ссылка на проект'];
+    'kerb' => 'Бордюр', 'address' => 'Адрес', 'delivery' => 'Доставка', 'comment' => 'Комментарий', 'topic' => 'Тема', 'total' => 'Ориентировочно, ₽', 'project' => 'Проект', 'link' => 'Ссылка на проект', 'image' => 'Картинка проекта'];
 
 function lead_handle(): void {
     $ajax = str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json');
@@ -52,6 +52,16 @@ function lead_handle(): void {
         'payload' => jenc($payload), 'page' => $in('page', 300), 'source' => jenc($source), 'ip' => client_ip(), 'status' => $status,
     ]);
 
+    $shot = (string)($_POST['shot'] ?? '');
+    if ($status === 'new' && $type === 'project3d' && str_starts_with($shot, 'data:image/jpeg;base64,') && strlen($shot) < 3000000) {
+        $bin = base64_decode(substr($shot, 23), true);
+        if ($bin !== false && @getimagesizefromstring($bin)) {
+            if (!is_dir(DATA_DIR . '/leads')) @mkdir(DATA_DIR . '/leads', 0775, true);
+            @file_put_contents(DATA_DIR . '/leads/' . $id . '.jpg', $bin);
+            $payload['image'] = 'есть, смотрите в админке';
+            update('leads', ['payload' => jenc($payload)], 'id = ?', [$id]);
+        }
+    }
     if ($status === 'new') {
         [$ok, $err] = lead_send_mail($id, $type, $payload, $in('page', 300), $source);
         update('leads', ['mail_ok' => $ok ? 1 : 0, 'mail_error' => $err], 'id = ?', [$id]);
