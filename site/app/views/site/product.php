@@ -2,7 +2,7 @@
   <div class="wrap prod">
     <div class="prod-gal">
       <div class="prod-img"><?= picture($p['images_a'][0] ?? null, $p['name'], '(max-width: 900px) 100vw, 520px', ['eager' => true]) ?></div>
-      <?php if (count($p['images_a']) > 1): ?><div class="prod-thumbs"><?php foreach ($p['images_a'] as $b): ?><?= picture($b, $p['name'], '96px') ?><?php endforeach; ?></div><?php endif; ?>
+      <?php if (count($p['images_a']) > 1): ?><div class="prod-thumbs" data-thumbs><?php foreach ($p['images_a'] as $i => $b): ?><button type="button" aria-pressed="<?= $i ? 'false' : 'true' ?>" data-src="<?= e(img_src_pair($b)['webp']) ?>"><?= picture($b, $p['name'], '96px') ?></button><?php endforeach; ?></div><?php endif; ?>
     </div>
     <div class="prod-info">
       <?php if ($p['subgroup']): ?><span class="eyebrow"><?= e($c['name']) ?> · <?= e($p['subgroup']) ?></span><?php endif; ?>

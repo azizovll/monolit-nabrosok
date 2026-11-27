@@ -197,6 +197,17 @@
     drawColors(); calc();
   });
 
+  /* миниатюры фото товара */
+  $$('[data-thumbs]').forEach(function (t) {
+    var main = t.parentNode.querySelector('.prod-img');
+    t.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-src]'); if (!b || !main) return;
+      $$('[data-src]', t).forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+      var alt = (b.querySelector('img') || {}).alt || '';
+      main.innerHTML = '<img src="' + b.getAttribute('data-src') + '" alt="' + alt.replace(/"/g, '&quot;') + '" width="800" height="1000">';
+    });
+  });
+
   /* фильтр колец по диаметру */
   var flt = $('[data-filter]');
   if (flt) flt.addEventListener('click', function (e) {
