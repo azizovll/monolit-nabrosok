@@ -53,7 +53,7 @@
       <?php endforeach; ?>
     </div>
     <?php if ($lawn): ?>
-      <a class="strip-link" href="<?= e(url('gazonnaya-reshetka/')) ?>"><b>Новинка: газонная решётка</b><span>Парковка на газоне без луж и колеи<?= $lawn['min_price'] ? ', ' . number_format($lawn['min_price'], 0, ',', ' ') . ' ₽' : '' ?> →</span></a>
+      <a class="strip-link" href="<?= e(url('gazonnaya-reshetka/')) ?>"><b>Новинка: газонная решётка</b><span>Парковка на газоне без луж и колеи<?= $lawn['min_price'] ? ', ' . number_format($lawn['min_price'], 0, ',', ' ') . ' ₽/' . e((string)val('SELECT price_unit FROM products WHERE category_id = ? AND visible = 1 ORDER BY sort LIMIT 1', [$lawn['id']])) : '' ?> →</span></a>
     <?php endif; ?>
   </div>
 </section>

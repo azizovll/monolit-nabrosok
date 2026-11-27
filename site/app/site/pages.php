@@ -58,7 +58,7 @@ function page_lawn() {
     $items = products_in((int)$c['id']);
     $p = $items[0] ?? null;
     return site_page('lawn', compact('c', 'items', 'p'), [
-        'title' => $c['seo_title'] ?: 'Газонная решётка в Пскове от производителя' . ($p && $p['price'] ? ', цена ' . number_format((int)$p['price'], 0, ',', ' ') . ' ₽' : ''),
+        'title' => $c['seo_title'] ?: 'Газонная решётка в Пскове от производителя' . ($p && $p['price'] ? ', цена ' . number_format((int)$p['price'], 0, ',', ' ') . ' ₽/' . $p['price_unit'] : ''),
         'description' => $c['seo_description'] ?: meta_desc($c['intro']),
         'image' => $p['images_a'][0] ?? '',
         'crumbs' => [['Газонная решётка', '/gazonnaya-reshetka/']],

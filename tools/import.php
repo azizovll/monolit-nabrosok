@@ -172,8 +172,8 @@ foreach ($catalog as $p) {
 /* газонная решётка: новая позиция, фото пока нет */
 insert('products', [
     'category_id' => $catId['gazonnaya-reshetka'], 'slug' => 'gazonnaya-reshetka', 'name' => 'Газонная решётка',
-    'price' => 1100, 'price_unit' => 'шт', 'specs' => jenc([['Высота', '80 мм']]), 'images' => '[]', 'sort' => 10,
-    'note' => 'Уточнить: цена за штуку или за м², размер элемента, вес, цвета, нагрузка. Нужна иллюстрация.', 'updated_at' => now(),
+    'price' => 1100, 'price_unit' => 'м²', 'specs' => jenc([['Высота', '80 мм']]), 'images' => '[]', 'sort' => 10,
+    'note' => 'Уточнить: размер элемента, вес, цвета, нагрузка.', 'updated_at' => now(),
 ]);
 
 /* ---------- брусчатка ---------- */

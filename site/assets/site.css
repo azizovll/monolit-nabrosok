@@ -418,3 +418,9 @@ details[open] summary::after{transform:rotate(45deg)}
 .pf-img img,.card-pave .pic img,.form-row .pic img{object-position:center}
 @media(max-width:900px){.pf-in{grid-template-columns:1fr}.pf-img{aspect-ratio:2/3;max-width:420px;margin:0 auto}}
 @media(max-width:860px){.form-row{grid-template-columns:1fr}.form-row .pic{aspect-ratio:2/3;max-height:none}}
+
+/* газонная решётка: вертикальное фото */
+.lawn-page .prod{grid-template-columns:.8fr 1.2fr}
+.lawn-page .prod-img{aspect-ratio:3/4}
+.lawn-page .prod-img img{object-fit:cover}
+@media(max-width:900px){.lawn-page .prod{grid-template-columns:1fr}.lawn-page .prod-img{aspect-ratio:3/4;max-width:420px;margin:0 auto}}
