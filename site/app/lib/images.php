@@ -74,6 +74,13 @@ function picture(?string $base, string $alt, string $sizes = '(max-width: 700px)
          . '<img src="' . url("$base-$mid.jpg") . '" srcset="' . $set('jpg') . '" sizes="' . e($sizes) . '" width="800" height="' . $h . '" alt="' . e($alt) . '" loading="' . $lazy . '" decoding="async"' . $extra . '></picture>';
 }
 
+/* самая подходящая доступная версия (до 800 px) для подмены фото скриптом */
+function img_src_pair(string $base): array {
+    $ws = img_meta($base)['widths'] ?: [400];
+    $w = max(array_filter($ws, fn($x) => $x <= 800) ?: [min($ws)]);
+    return ['webp' => url("$base-$w.webp"), 'jpg' => url("$base-$w.jpg")];
+}
+
 function img_delete(string $base): void {
     if (!str_starts_with($base, 'uploads/')) return;
     foreach (glob(ROOT_DIR . '/' . $base . '-*.{webp,jpg}', GLOB_BRACE) ?: [] as $f) @unlink($f);

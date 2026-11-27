@@ -98,6 +98,18 @@
     var want = new URLSearchParams(location.search).get('cvet');
     D.colors.forEach(function (c) { if (c.slug === want) cur.c = c; });
     function variant() { var v = cur.c.v.filter(function (x) { return x.t === cur.t; })[0]; return v || cur.c.v[0]; }
+    var imgBox = $('[data-pf-img]', pf), cache = {};
+    function load(src) { if (!cache[src]) cache[src] = new Promise(function (ok, no) { var i = new Image(); i.decoding = 'async'; i.onload = function () { ok(i); }; i.onerror = no; i.src = src; }); return cache[src]; }
+    function showImg(src, alt) {
+      var tok = (imgBox._t = (imgBox._t || 0) + 1);
+      var slow = setTimeout(function () { if (tok === imgBox._t) imgBox.classList.add('swap'); }, 120);   // затемняем, только если грузится заметно долго
+      load(src).then(function () {
+        if (tok !== imgBox._t) return;
+        imgBox.innerHTML = '<img src="' + src + '" alt="' + alt.replace(/"/g, '&quot;') + '" width="800" height="600">';
+      }).catch(function () {}).then(function () { clearTimeout(slow); if (tok === imgBox._t) imgBox.classList.remove('swap'); });
+    }
+    function preloadAll() { D.colors.forEach(function (c) { c.v.forEach(function (x) { if (x.img) load(x.img.webp).catch(function () {}); }); }); }
+    if ('requestIdleCallback' in window) requestIdleCallback(preloadAll, { timeout: 3000 }); else setTimeout(preloadAll, 1500);
     function renderPf(swapImg) {
       if (!cur.t || !cur.c.v.some(function (x) { return x.t === cur.t; })) cur.t = cur.c.v[0].t;
       var v = variant();
@@ -108,13 +120,7 @@
       var thw = $('[data-pf-th-wrap]', pf), th = $('[data-pf-th]', pf);
       thw.hidden = cur.c.v.length < 2;
       th.innerHTML = cur.c.v.map(function (x) { return '<button type="button" data-t="' + x.t + '" aria-pressed="' + (x.t === cur.t) + '">' + x.t + ' мм</button>'; }).join('');
-      if (swapImg && v.img) {
-        var box = $('[data-pf-img]', pf), img = $('img', box), srcEl = $('source', box);
-        box.classList.add('swap');
-        var token = (pf._imgTok = (pf._imgTok || 0) + 1);
-        var n = new Image(); n.onload = function () { if (token !== pf._imgTok) return; if (srcEl) srcEl.srcset = v.img.webp; img.srcset = ''; img.src = v.img.jpg; img.alt = 'Брусчатка ' + D.form + ' ' + cur.c.name; box.classList.remove('swap'); };
-        n.src = v.img.jpg;
-      }
+      if (swapImg && v.img) showImg(v.img.webp, 'Брусчатка ' + D.form + ' ' + cur.c.name);
       var a3 = $('[data-pf-3d]', pf); if (a3) a3.href = MW.base + '/3d/?forma=' + D.slug + '&cvet=' + cur.c.slug;
       try { var u = new URL(location.href); u.searchParams.set('cvet', cur.c.slug); history.replaceState(null, '', u); } catch (e) {}
       calcPf();

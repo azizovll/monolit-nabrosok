@@ -4,7 +4,7 @@ $v0 = $c0['variants'][0];
 $img0 = $v0['image'] ?: (jdec($f['images'])[0] ?? '');
 $data = ['form' => $f['name'], 'slug' => $f['slug'], 'm2' => (float)$f['m2_per_pallet'], 'kg' => (int)$f['pallet_kg'], 'colors' => array_map(fn($c) => [
     'slug' => $c['slug'], 'name' => $c['name'], 'grp' => $c['grp'], 'sw' => swatch_css($c['palette']),
-    'v' => array_map(fn($v) => ['t' => $v['thickness'], 'p' => $v['price'], 'a' => $v['available'], 'f' => $v['forming'], 'img' => $v['image'] ? ['webp' => url($v['image'] . '-800.webp'), 'jpg' => url($v['image'] . '-800.jpg')] : null], $c['variants'])], $colors)];
+    'v' => array_map(fn($v) => ['t' => $v['thickness'], 'p' => $v['price'], 'a' => $v['available'], 'f' => $v['forming'], 'img' => $v['image'] ? img_src_pair($v['image']) : null], $c['variants'])], $colors)];
 $specs = array_merge([['Размеры элементов', implode(', ', array_map(fn($x) => $x[0] . '×' . $x[1], $el)) . ' мм'], ['Толщина', implode(', ', array_unique(array_merge(...array_map(fn($c) => array_column($c['variants'], 'thickness'), $colors)))) . ' мм'],
     ['На поддоне', str_replace('.', ',', (string)$f['m2_per_pallet']) . ' м²'], ['Вес поддона', 'около ' . number_format((int)$f['pallet_kg'], 0, ',', ' ') . ' кг']], jdec($f['specs']));
 $groups = ['mono' => 'Одноцветная', 'mix' => 'Колормикс'];
