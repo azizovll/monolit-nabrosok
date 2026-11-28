@@ -40,11 +40,12 @@
           <span class="to-ph-q" data-ph-quads></span>
           <label><span class="to-long">Ширина</span><span class="to-short">Ш</span><input type="number" min="0.5" max="60" step="0.1" value="3" data-ph-w>м</label>
           <label><span class="to-long">Глубина</span><span class="to-short">Г</span><input type="number" min="0.5" max="60" step="0.1" value="4" data-ph-d>м</label>
-          <button type="button" class="tbtn" data-ph-auto title="Оценить глубину по перспективе фото, зная ширину">≈ по фото</button>
-          <label class="to-ph-chk"><input type="checkbox" data-ph-kerb checked>Бордюр</label>
-          <button type="button" class="tbtn" data-ph-rot title="Повернуть рисунок плитки на 90°">↻ Рисунок</button>
+          <button type="button" class="tbtn to-ph-more" data-ph-auto title="Оценить глубину по перспективе фото, зная ширину">≈ по фото</button>
+          <label class="to-ph-chk to-ph-more"><input type="checkbox" data-ph-kerb checked>Бордюр</label>
+          <button type="button" class="tbtn to-ph-more" data-ph-rot title="Повернуть рисунок плитки на 90°">↻ Рисунок</button>
+          <button type="button" class="tbtn to-ph-tgl" data-ph-tgl aria-expanded="false">Ещё ▾</button>
         </div>
-        <div class="to-ph-row">
+        <div class="to-ph-row to-ph-more">
           <span class="seg to-ph-seg"><button type="button" data-ph-brush="erase" aria-pressed="false" title="Закрасьте то, что стоит поверх плитки: машину, людей, кусты">Стереть</button><button type="button" data-ph-brush="restore" aria-pressed="false">Вернуть</button></span>
           <label class="to-ph-rng" data-ph-bsw hidden>Кисть<input type="range" min="0.01" max="0.12" step="0.005" value="0.04" data-ph-bs></label>
           <label class="to-ph-rng">Яркость<input type="range" min="0.5" max="1.6" step="0.05" value="1" data-ph-g></label>

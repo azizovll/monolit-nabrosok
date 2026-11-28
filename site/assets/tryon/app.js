@@ -1169,6 +1169,7 @@ $('[data-ph-d]').addEventListener('input', e => { const q = PQ(); if (q) { q.d =
 $('[data-ph-kerb]').addEventListener('change', e => { const q = PQ(); if (q) { q.kerb = e.target.checked; phHandles(); phDirty = true; } });
 $('[data-ph-g]').addEventListener('input', e => { PH.gain = +e.target.value; phDirty = true; });
 $('[data-ph-bs]').addEventListener('input', e => { PH.bs = +e.target.value; });
+$('[data-ph-tgl]').addEventListener('click', e => { const bar = $('[data-ph-bar]'), on = bar.classList.toggle('more'); phUI.classList.toggle('edges', on); e.currentTarget.setAttribute('aria-expanded', on); e.currentTarget.textContent = on ? 'Скрыть ▴' : 'Ещё ▾'; phLayout(); });
 $('[data-ph-bar]').addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return; const d = t.dataset, q = PQ();
   if (d.phq) phActivate(+d.phq);

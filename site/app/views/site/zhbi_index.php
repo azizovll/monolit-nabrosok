@@ -12,7 +12,7 @@
     <div class="cats cats-big">
       <?php foreach ($cats as $c): ?>
         <a class="cat" href="<?= e(url($c['url'])) ?>"><div class="pic"><?= picture($c['img'], $c['name'], '(max-width: 700px) 50vw, 280px') ?></div>
-          <b><?= e($c['name']) ?></b><span><?= $c['n'] ?> <?= plural($c['n'], 'позиция', 'позиции', 'позиций') ?><?= $c['min_price'] ? ' · от ' . number_format($c['min_price'], 0, ',', ' ') . ' ₽' : '' ?></span>
+          <b><?= e($c['name']) ?></b><span><?= $c['n'] ?> <?= plural($c['n'], 'позиция', 'позиции', 'позиций') ?><?= $c['min_price'] ? ' · от ' . number_format($c['min_price'], 0, ',', ' ') . ' ₽' : '' ?></span>
           <p><?= e($c['intro']) ?></p></a>
       <?php endforeach; ?>
     </div>

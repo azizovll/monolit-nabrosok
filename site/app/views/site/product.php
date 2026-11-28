@@ -8,7 +8,7 @@
       <?php if ($p['subgroup']): ?><span class="eyebrow"><?= e($c['name']) ?> · <?= e($p['subgroup']) ?></span><?php endif; ?>
       <h1><?= e($p['name']) ?></h1>
       <?php if ($p['short']): ?><p class="lead"><?= e($p['short']) ?></p><?php endif; ?>
-      <div class="pf-price"><?= $p['price'] ? '<b>' . number_format((int)$p['price'], 0, ',', ' ') . ' ₽</b><span>/' . e($p['price_unit']) . '</span>' : '<b>Цена по запросу</b>' ?>
+      <div class="pf-price"><?= $p['price'] ? '<b>' . number_format((int)$p['price'], 0, ',', ' ') . ' ₽</b><span>/' . e($p['price_unit']) . '</span>' : '<b>Цена по запросу</b>' ?>
         <span class="tag <?= $p['in_stock'] ? 'ok' : '' ?>"><?= $p['in_stock'] ? 'в наличии' : 'под заказ' ?></span></div>
       <?php if ($p['specs_a']): ?>
         <dl class="specs"><?php foreach ($p['specs_a'] as [$k, $v]): ?><dt><?= e($k) ?></dt><dd><?= e($v) ?></dd><?php endforeach; ?></dl>

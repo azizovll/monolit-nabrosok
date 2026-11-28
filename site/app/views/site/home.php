@@ -5,7 +5,7 @@
     <div>
       <span class="badge"><i></i>Своё производство в Пскове · более 20 лет</span>
       <h1>Брусчатка и ЖБИ <span>от производителя</span> без наценки посредников</h1>
-      <p class="sub">Тротуарная плитка от <?= number_format($minPave, 0, ',', ' ') ?> ₽/м², кольца колодезные, плиты, люки и бордюры с завода на Карбышева, 26а. Посчитаем за 15 минут и привезём манипулятором.</p>
+      <p class="sub">Тротуарная плитка от <?= number_format($minPave, 0, ',', ' ') ?> ₽/м², кольца колодезные, плиты, люки и бордюры с завода на Карбышева, 26а. Посчитаем за 15 минут и привезём манипулятором.</p>
       <div class="cta">
         <a class="btn btn-brand" href="<?= e(url('raschet/')) ?>">Рассчитать стоимость</a>
         <a class="btn btn-ghost" href="tel:<?= e($tel) ?>" data-goal="phone">Позвонить</a>
@@ -18,8 +18,8 @@
       <div class="pic"><picture><source type="image/webp" srcset="<?= e(url('assets/img/foto-4.webp')) ?>"><img src="<?= e(url('assets/img/foto-4.jpg')) ?>" alt="Брусчатка Монолит-Вест на площадке" width="800" height="524" loading="lazy"></picture><em>Цены завода</em></div>
       <div class="body">
         <h3>Прайс на сегодня</h3>
-        <?php foreach ($forms as $f): ?><a class="row" href="<?= e(url($f['url'])) ?>">Брусчатка «<?= e($f['name']) ?>»<b>от <?= number_format($f['min_price'], 0, ',', ' ') ?> ₽/м²</b></a><?php endforeach; ?>
-        <?php foreach (array_slice($popular, 0, 2) as $p): ?><a class="row" href="<?= e(url($p['url'])) ?>"><?= e($p['name']) ?><b><?= $p['price'] ? number_format((int)$p['price'], 0, ',', ' ') . ' ₽' : 'по запросу' ?></b></a><?php endforeach; ?>
+        <?php foreach ($forms as $f): ?><a class="row" href="<?= e(url($f['url'])) ?>">Брусчатка «<?= e($f['name']) ?>»<b>от <?= number_format($f['min_price'], 0, ',', ' ') ?> ₽/м²</b></a><?php endforeach; ?>
+        <?php foreach (array_slice($popular, 0, 2) as $p): ?><a class="row" href="<?= e(url($p['url'])) ?>"><?= e($p['name']) ?><b><?= $p['price'] ? number_format((int)$p['price'], 0, ',', ' ') . ' ₽' : 'по запросу' ?></b></a><?php endforeach; ?>
         <button class="btn btn-brand btn-wide" type="button" data-lead="callback" data-title="Расчёт на мой участок">Получить расчёт на мой участок</button>
         <small class="muted"><?= e(price_date_text()) ?></small>
       </div>
@@ -48,7 +48,7 @@
         <a class="card-p card-pave" href="<?= e(url($f['url'])) ?>">
           <div class="pic"><?= picture($img, 'Брусчатка ' . $f['name'], '(max-width: 700px) 50vw, 300px') ?></div>
           <div class="body"><h3>«<?= e($f['name']) ?>»</h3><p class="meta"><?= $f['colors_n'] ?> <?= plural($f['colors_n'], 'цвет', 'цвета', 'цветов') ?> · <?= e(implode(', ', array_map(fn($x) => $x[0] . '×' . $x[1], jdec($f['elements'])))) ?> мм</p>
-            <div class="foot"><span class="price"><small>от</small> <?= number_format($f['min_price'], 0, ',', ' ') ?> ₽<small>/м²</small></span><span class="go">Подобрать цвет →</span></div></div>
+            <div class="foot"><span class="price"><small>от</small> <?= number_format($f['min_price'], 0, ',', ' ') ?> ₽<small>/м²</small></span><span class="go">Подобрать цвет →</span></div></div>
         </a>
       <?php endforeach; ?>
     </div>
@@ -85,7 +85,7 @@
     </div>
     <div class="cats">
       <?php foreach ($cats as $c): ?>
-        <a class="cat" href="<?= e(url($c['url'])) ?>"><div class="pic"><?= picture($c['img'], $c['name'], '(max-width: 700px) 50vw, 200px') ?></div><b><?= e($c['name']) ?></b><span><?= $c['min_price'] ? 'от ' . number_format($c['min_price'], 0, ',', ' ') . ' ₽' : 'цена по запросу' ?></span></a>
+        <a class="cat" href="<?= e(url($c['url'])) ?>"><div class="pic"><?= picture($c['img'], $c['name'], '(max-width: 700px) 50vw, 200px') ?></div><b><?= e($c['name']) ?></b><span><?= $c['min_price'] ? 'от ' . number_format($c['min_price'], 0, ',', ' ') . ' ₽' : 'цена по запросу' ?></span></a>
       <?php endforeach; ?>
     </div>
     <h3 class="h3">Популярное</h3>

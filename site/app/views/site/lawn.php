@@ -11,7 +11,7 @@
       <h1><?= e($c['h1'] ?: 'Газонная решётка') ?></h1>
       <p class="lead"><?= e($c['intro']) ?></p>
       <?php if ($p): ?>
-        <div class="pf-price"><?= $p['price'] ? '<b>' . number_format((int)$p['price'], 0, ',', ' ') . ' ₽</b><span>/' . e($p['price_unit']) . '</span>' : '<b>Цена по запросу</b>' ?></div>
+        <div class="pf-price"><?= $p['price'] ? '<b>' . number_format((int)$p['price'], 0, ',', ' ') . ' ₽</b><span>/' . e($p['price_unit']) . '</span>' : '<b>Цена по запросу</b>' ?></div>
         <?php if ($p['specs_a']): ?><dl class="specs"><?php foreach ($p['specs_a'] as [$k, $v]): ?><dt><?= e($k) ?></dt><dd><?= e($v) ?></dd><?php endforeach; ?></dl><?php endif; ?>
         <div class="cta-row">
           <button class="btn btn-brand" type="button" data-lead="product" data-product="Газонная решётка" data-qty="1">Оставить заявку</button>

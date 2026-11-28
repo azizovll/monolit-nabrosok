@@ -74,6 +74,8 @@ p{margin:0 0 12px}
   .menu a{font-size:19px;padding:14px 12px;border-bottom:1px solid var(--line);border-radius:0}
   .menu .menu-extra{display:block}
   .burger{display:block}
+  /* размытие фона у шапки делает её «контейнером» для fixed-меню: меню сжималось до 32 px */
+  .hdr{backdrop-filter:none;-webkit-backdrop-filter:none;background:#fff}
 }
 @media(max-width:1180px){.hdr-r{margin-left:auto}}
 @media(max-width:760px){.hdr-phone,.hdr-cta{display:none}.hdr-in{height:62px;gap:10px}.logo img{height:34px}.logo b{font-size:16px}.logo small{font-size:9.5px;letter-spacing:.04em}}
@@ -215,6 +217,7 @@ p{margin:0 0 12px}
 @media(max-width:860px){.form-row{grid-template-columns:1fr}.form-row .body{padding:18px}}
 .sw-mini{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
 .sw-mini a{width:26px;height:26px;border-radius:50%;box-shadow:0 0 0 2px #fff,0 0 0 3px var(--line)}
+@media(pointer:coarse){.sw-mini{gap:8px}.sw-mini a{width:32px;height:32px}}
 .dot{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:8px;vertical-align:-2px;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
 .tbl-wrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:var(--r);margin-top:22px}
 .tbl{width:100%;border-collapse:collapse;font-size:15px}
@@ -330,7 +333,7 @@ input[type=range]{width:100%;accent-color:var(--brand)}
   .ftiles{gap:6px}
   .ftile{padding:8px 2px 7px;font-size:12px}
   .ftile svg{width:34px;height:22px;margin-bottom:1px}
-  .ftile small{font-size:10.5px}
+  .ftile small{font-size:11.5px}
   .cb-row2{gap:12px}
   .calc-box .seg button{padding:8px 11px}
   .dots{gap:8px}.dot-b{width:33px;height:33px}
@@ -489,6 +492,8 @@ details[open] summary::after{transform:rotate(45deg)}
 .to-ph-bar .tbtn{box-shadow:none;background:var(--bg);padding:6px 10px;font-size:13px}
 .to-ph-bar .seg button{padding:6px 10px;font-size:13px}
 .to-ph-bar .tbtn[aria-pressed=true]{background:var(--ink);color:#fff}
+.to-ph-tgl{display:none}
+@media(max-width:900px){.to-ph-tgl{display:inline-block}.to-ph-bar:not(.more) .to-ph-more{display:none!important}.to-photo:not(.edges) [data-ph-edges]{display:none}}
 .to-ph-q{display:flex;gap:4px;align-items:center}
 .to-ph-q button{min-width:30px;height:30px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font:700 13px var(--f);cursor:pointer;padding:0 8px}
 .to-ph-q button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}

@@ -41,7 +41,7 @@ function asset(string $path): string {
     return url($path) . ($v ? '?v=' . $v : '');
 }
 
-function money($n): string { return number_format((float)$n, 0, ',', ' ') . ' ₽'; }
+function money($n): string { return number_format((float)$n, 0, ',', ' ') . ' ₽'; }
 
 function plural(int $n, string $one, string $few, string $many): string {
     $n = abs($n) % 100; $n1 = $n % 10;

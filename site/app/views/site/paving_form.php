@@ -6,7 +6,7 @@ $data = ['form' => $f['name'], 'slug' => $f['slug'], 'm2' => (float)$f['m2_per_p
     'slug' => $c['slug'], 'name' => $c['name'], 'grp' => $c['grp'], 'sw' => swatch_css($c['palette']),
     'v' => array_map(fn($v) => ['t' => $v['thickness'], 'p' => $v['price'], 'a' => $v['available'], 'f' => $v['forming'], 'img' => $v['image'] ? img_src_pair($v['image']) : null], $c['variants'])], $colors)];
 $specs = array_merge([['Размеры элементов', implode(', ', array_map(fn($x) => $x[0] . '×' . $x[1], $el)) . ' мм'], ['Толщина', implode(', ', array_unique(array_merge(...array_map(fn($c) => array_column($c['variants'], 'thickness'), $colors)))) . ' мм'],
-    ['На поддоне', str_replace('.', ',', (string)$f['m2_per_pallet']) . ' м²'], ['Вес поддона', 'около ' . number_format((int)$f['pallet_kg'], 0, ',', ' ') . ' кг']], jdec($f['specs']));
+    ['На поддоне', str_replace('.', ',', (string)$f['m2_per_pallet']) . ' м²'], ['Вес поддона', 'около ' . number_format((int)$f['pallet_kg'], 0, ',', ' ') . ' кг']], jdec($f['specs']));
 $groups = ['mono' => 'Одноцветная', 'mix' => 'Колормикс'];
 ?>
 <section class="sec page-top pf" data-pf>
@@ -18,7 +18,7 @@ $groups = ['mono' => 'Одноцветная', 'mix' => 'Колормикс'];
     <div class="pf-info">
       <h1>Брусчатка «<?= e($f['name']) ?>»</h1>
       <p class="lead"><?= e($f['short']) ?></p>
-      <div class="pf-price"><b data-pf-price><?= $v0['price'] ? number_format($v0['price'], 0, ',', ' ') . ' ₽' : 'по запросу' ?></b><span>/м²</span><span class="tag" data-pf-name><?= e($c0['name']) ?></span><span class="muted small"><?= e(price_date_text()) ?></span></div>
+      <div class="pf-price"><b data-pf-price><?= $v0['price'] ? number_format($v0['price'], 0, ',', ' ') . ' ₽' : 'по запросу' ?></b><span>/м²</span><span class="tag" data-pf-name><?= e($c0['name']) ?></span><span class="muted small"><?= e(price_date_text()) ?></span></div>
 
       <div class="f">
         <div class="cb-head"><span class="cb-l">Цвет</span><span class="cb-val" data-pf-cval></span></div>
@@ -72,7 +72,7 @@ $groups = ['mono' => 'Одноцветная', 'mix' => 'Колормикс'];
     <div class="cards4 cards3">
       <?php foreach ($others as $o): ?>
         <a class="card-p card-pave" href="<?= e(url($o['url'])) ?>"><div class="pic"><?= picture(jdec($o['images'])[0] ?? '', 'Брусчатка ' . $o['name'], '(max-width: 700px) 50vw, 300px') ?></div>
-          <div class="body"><h3>«<?= e($o['name']) ?>»</h3><div class="foot"><span class="price"><small>от</small> <?= number_format($o['min_price'], 0, ',', ' ') ?> ₽<small>/м²</small></span></div></div></a>
+          <div class="body"><h3>«<?= e($o['name']) ?>»</h3><div class="foot"><span class="price"><small>от</small> <?= number_format($o['min_price'], 0, ',', ' ') ?> ₽<small>/м²</small></span></div></div></a>
       <?php endforeach; ?>
     </div>
   </div>

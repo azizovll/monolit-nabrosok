@@ -20,7 +20,7 @@ $icons = [
       <span class="cb-l">Форма</span>
       <div class="ftiles" data-c-forms>
         <?php foreach ($calc as $i => $f): $min = min(array_filter(array_merge(...array_map(fn($c) => array_column($c['v'], 'p'), $f['colors']))) ?: [0]); ?>
-          <button type="button" class="ftile" data-fi="<?= $i ?>" aria-pressed="<?= $i === 0 ? 'true' : 'false' ?>"><?= $icons[$f['slug']] ?? '' ?><span><?= e($f['name']) ?></span><small>от <?= number_format($min, 0, ',', ' ') ?> ₽</small></button>
+          <button type="button" class="ftile" data-fi="<?= $i ?>" aria-pressed="<?= $i === 0 ? 'true' : 'false' ?>"><?= $icons[$f['slug']] ?? '' ?><span><?= e($f['name']) ?></span><small>от <?= number_format($min, 0, ',', ' ') ?> ₽</small></button>
         <?php endforeach; ?>
       </div>
     </div>

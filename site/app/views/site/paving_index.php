@@ -1,7 +1,7 @@
 <section class="sec page-top">
   <div class="wrap">
     <span class="eyebrow">Брусчатка от производителя</span>
-    <h1>Брусчатка в Пскове: 4 формы, <?= count($colors) ?> цветов, от <?= number_format($min, 0, ',', ' ') ?> ₽/м²</h1>
+    <h1>Брусчатка в Пскове: 4 формы, <?= count($colors) ?> цветов, от <?= number_format($min, 0, ',', ' ') ?> ₽/м²</h1>
     <p class="lead">Своё производство на Карбышева, 26а. Бетон В25, морозостойкость F₂200, ГОСТ 17608-2017. Привезём на объект и выгрузим манипулятором.</p>
     <div class="cta-row">
       <button class="btn btn-brand" type="button" data-lead="paving" data-title="Подобрать плитку">Подобрать плитку</button>
@@ -23,7 +23,7 @@
             <div class="sw-mini" aria-label="Цвета">
               <?php foreach ($fc as $c): ?><a href="<?= e(url($f['url'] . '?cvet=' . $c['slug'])) ?>" title="<?= e($c['name']) ?>" style="background:<?= e(swatch_css($c['palette'])) ?>"></a><?php endforeach; ?>
             </div>
-            <div class="foot"><span class="price"><small>от</small> <?= number_format($f['min_price'], 0, ',', ' ') ?> ₽<small>/м²</small></span>
+            <div class="foot"><span class="price"><small>от</small> <?= number_format($f['min_price'], 0, ',', ' ') ?> ₽<small>/м²</small></span>
               <a class="btn btn-brand btn-sm" href="<?= e(url($f['url'])) ?>">Выбрать цвет</a></div>
           </div>
         </article>
@@ -45,7 +45,7 @@
         <?php foreach ($colors as $c): ?>
           <tr><th><i class="dot" style="background:<?= e(swatch_css(jdec($c['palette']))) ?>"></i><?= e($c['name']) ?></th>
             <?php foreach ($forms as $f): $pr = rows('SELECT thickness, price FROM paving_prices WHERE form_id = ? AND color_id = ? ORDER BY thickness', [$f['id'], $c['id']]); ?>
-              <td><?= $pr ? implode('<br>', array_map(fn($x) => $x['price'] ? '<a href="' . e(url($f['url'] . '?cvet=' . $c['slug'])) . '">' . number_format((int)$x['price'], 0, ',', ' ') . ' ₽</a>' . (count($pr) > 1 ? ' <small>' . $x['thickness'] . ' мм</small>' : '') : 'по запросу', $pr)) : '<span class="muted">—</span>' ?></td>
+              <td><?= $pr ? implode('<br>', array_map(fn($x) => $x['price'] ? '<a href="' . e(url($f['url'] . '?cvet=' . $c['slug'])) . '">' . number_format((int)$x['price'], 0, ',', ' ') . ' ₽</a>' . (count($pr) > 1 ? ' <small>' . $x['thickness'] . ' мм</small>' : '') : 'по запросу', $pr)) : '<span class="muted">—</span>' ?></td>
             <?php endforeach; ?></tr>
         <?php endforeach; ?>
         </tbody>

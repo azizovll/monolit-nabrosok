@@ -99,7 +99,7 @@ function page_row(string $slug): array {
 
 function price_html(?int $price, string $unit = 'шт', bool $from = false): string {
     if (!$price) return '<span class="price ask">Цена по запросу</span>';
-    return '<span class="price">' . ($from ? '<small>от</small> ' : '') . number_format($price, 0, ',', ' ') . ' ₽<small>/' . e($unit) . '</small></span>';
+    return '<span class="price">' . ($from ? '<small>от</small> ' : '') . number_format($price, 0, ',', ' ') . ' ₽<small>/' . e($unit) . '</small></span>';
 }
 
 function price_date_text(): string {
@@ -124,7 +124,7 @@ function spec_line(array $p): string {
         $out[] = 'Ø ' . $num($s('Внутренний диаметр'));
         if ($s('Высота') !== '') $out[] = 'высота ' . $num($s('Высота'));
         if ($s('Толщина стенки') !== '') $out[] = 'стенка ' . $num($s('Толщина стенки'));
-        if ($s('Вес') !== '') $out[] = preg_replace_callback('~\d{4,}~', fn($m) => number_format((int)$m[0], 0, ',', ' '), $num($s('Вес')));
+        if ($s('Вес') !== '') $out[] = preg_replace_callback('~\d{4,}~', fn($m) => number_format((int)$m[0], 0, ',', ' '), $num($s('Вес')));
     } elseif ($s('Размеры (Д×Ш×В)') !== '') {
         $out[] = $s('Размеры (Д×Ш×В)');
     } elseif ($s('Размеры') !== '') {
