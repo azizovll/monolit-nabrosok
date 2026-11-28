@@ -5,14 +5,24 @@
       <div class="seg to-mode"><button type="button" data-mode="3d" aria-pressed="true">3D</button><button type="button" data-mode="plan" aria-pressed="false">План</button></div>
       <div class="to-draw" data-plan-only hidden>
         <button type="button" class="tbtn" data-draw="pave" aria-pressed="false">+ Площадка</button>
-        <button type="button" class="tbtn" data-draw="grid" aria-pressed="false">+ Газонная решётка</button>
+        <button type="button" class="tbtn" data-draw="grid" aria-pressed="false">+ <span class="to-long">Газонная решётка</span><span class="to-short">Решётка</span></button>
       </div>
       <div class="to-r">
-        <button type="button" class="tbtn ico" data-undo title="Отменить" aria-label="Отменить">↶</button>
-        <button type="button" class="tbtn" data-shot>Картинка</button>
+        <button type="button" class="tbtn ico" data-undo title="Отменить (Ctrl+Z)" aria-label="Отменить">↶</button>
+        <button type="button" class="tbtn ico" data-redo title="Повторить (Ctrl+Y)" aria-label="Повторить">↷</button>
+        <button type="button" class="tbtn" data-shot title="Сохранить картинку"><span class="to-long">Картинка</span><span class="to-short">Фото</span></button>
+      </div>
+      <div class="to-v" data-3d-only>
+        <button type="button" class="tbtn" data-view title="Сменить вид">Общий вид</button>
+        <button type="button" class="tbtn" data-light title="Освещение">Солнце</button>
       </div>
     </div>
     <div class="to-hint" data-hint hidden></div>
+    <div class="to-swap" data-swap hidden>
+      <button type="button" data-sw="-1" aria-label="Предыдущий цвет">‹</button>
+      <span><small data-swt></small><b data-swn></b></span>
+      <button type="button" data-sw="1" aria-label="Следующий цвет">›</button>
+    </div>
     <div class="to-loader" data-loader><div><i></i>Строим участок… <span data-lp></span></div></div>
     <p class="to-disc"><?= e(setting('disclaimer')) ?></p>
   </div>
@@ -27,6 +37,7 @@
       <button type="button" role="tab" data-tab="sum" aria-selected="false">Смета</button>
     </div>
     <div class="to-body" data-body></div>
+    <div class="to-foot" data-foot></div>
   </aside>
 </section>
 

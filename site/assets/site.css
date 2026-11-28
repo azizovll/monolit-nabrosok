@@ -443,7 +443,28 @@ details[open] summary::after{transform:rotate(45deg)}
 .tbtn.ico{font-size:18px;padding:6px 12px}
 .tbtn[aria-pressed=true]{background:var(--brand);color:#fff}
 .tbtn:disabled{opacity:.45;cursor:default}
-.to-hint{position:absolute;left:50%;bottom:44px;transform:translateX(-50%);z-index:3;background:rgba(28,24,23,.84);color:#fff;font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:99px;max-width:calc(100% - 24px);text-align:center;pointer-events:none}
+.to-hint{position:absolute;left:50%;top:64px;transform:translateX(-50%);z-index:3;background:rgba(28,24,23,.84);color:#fff;font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:14px;max-width:min(520px,calc(100% - 24px));text-align:center;pointer-events:none;line-height:1.35}
+.to-v{display:flex;gap:8px;width:100%}
+.to-short{display:none}
+.to-swap{position:absolute;left:50%;bottom:46px;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.96);border-radius:99px;padding:4px;box-shadow:0 6px 20px rgba(0,0,0,.16)}
+.to-swap button{width:40px;height:40px;border:0;border-radius:50%;background:var(--ink);color:#fff;font:700 22px/1 var(--f);cursor:pointer;padding:0 0 3px}
+.to-swap button:active{transform:scale(.94)}
+.to-swap span{min-width:132px;text-align:center;line-height:1.15;padding:0 6px}
+.to-swap small{display:block;font-size:11.5px;color:var(--mute);font-weight:600}
+.to-swap b{font-size:15px;white-space:nowrap}
+.to-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#fff}
+.to-foot small{display:block;font-size:12px;color:var(--mute)}
+.to-foot b{font-size:21px;letter-spacing:-.02em}
+.to-foot .btn{padding:12px 18px;font-size:15px;white-space:nowrap}
+.to-zone b{font-size:13px;white-space:nowrap}
+.to-total small{display:block;font-size:12.5px;color:var(--mute)}
+.to-vars{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.to-var{position:relative}
+.to-var>button:first-child{display:block;width:100%;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:0;overflow:hidden;cursor:pointer;text-align:left;font:600 12.5px/1.25 var(--f);color:var(--ink)}
+.to-var img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}
+.to-var span{display:block;padding:6px 8px}
+.to-var small{display:block;color:var(--mute);font-weight:500}
+.to-x{position:absolute;top:4px;right:4px;width:26px;height:26px;border:0;border-radius:50%;background:rgba(28,24,23,.75);color:#fff;font-size:16px;line-height:1;cursor:pointer}
 .to-disc{position:absolute;left:0;right:0;bottom:0;margin:0;z-index:3;background:rgba(255,255,255,.9);font-size:11.5px;line-height:1.35;color:var(--soft);padding:6px 12px;text-align:center}
 .to-loader{position:absolute;inset:0;z-index:5;display:grid;place-items:center;background:#e9eeef;color:var(--soft);font-weight:600;text-align:center;transition:opacity .4s}
 .to-loader.off{opacity:0;pointer-events:none}
@@ -494,10 +515,18 @@ details[open] summary::after{transform:rotate(45deg)}
 .to-total b{font-size:26px;letter-spacing:-.02em}
 .to-empty{color:var(--mute);font-size:14px;background:#fff;border:1px dashed var(--line);border-radius:12px;padding:14px}
 @media(max-width:900px){
-  .tryon{grid-template-columns:1fr;height:auto;min-height:0}
-  .to-view{height:62vh;height:62svh;min-height:380px}
-  .to-panel{border-left:0}
-  .to-body{overflow:visible;padding-bottom:100px}
+  .tryon{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,50%) minmax(0,1fr);height:calc(100svh - var(--to-top,110px));min-height:520px}
+  .to-view{min-height:0}
+  .to-panel{border-left:0;border-top:1px solid var(--line);min-height:0}
+  .to-h1{display:none}
+  .to-tabs{padding:8px 10px}
+  .to-body{padding:14px 14px 20px}
   .to-tools{left:8px;right:8px;top:8px;gap:6px}
   .tbtn{padding:8px 10px;font-size:13px}
+  .to-hint{top:auto;bottom:96px;font-size:12.5px;padding:7px 12px}
+  .to-swap{bottom:40px}.to-swap button{width:36px;height:36px}.to-swap span{min-width:112px}
+  .to-disc{font-size:10.5px;padding:4px 8px}
+  .to-foot{padding:10px 14px}.to-foot b{font-size:19px}
+  body:has(.tryon) .mbar{display:none}
+  .to-long{display:none}.to-short{display:inline}
 }

@@ -40,7 +40,14 @@ AddDefaultCharset UTF-8
   ExpiresByType font/woff2 "access plus 1 year"
   ExpiresByType text/css "access plus 7 days"
   ExpiresByType application/javascript "access plus 7 days"
-  ExpiresByType application/octet-stream "access plus 7 days"
+  ExpiresByType application/octet-stream "access plus 30 days"
+</IfModule>
+
+# небо для 3D (sky.hdr) сжимается на треть
+<IfModule mod_deflate.c>
+  <FilesMatch "\.hdr$">
+    SetOutputFilter DEFLATE
+  </FilesMatch>
 </IfModule>
 
 <IfModule mod_headers.c>

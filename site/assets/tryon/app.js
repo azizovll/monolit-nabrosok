@@ -8,6 +8,7 @@ import { formSpec, period, PATTERN_NAMES, PATTERN_ROT, rng, vn } from 'tryon/pav
 const D = JSON.parse(document.getElementById('tryon-data').textContent);
 const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => [...(r || document).querySelectorAll(s)];
 const fmt = n => Math.round(n).toLocaleString('ru-RU');
+const plural = (n, one, few, many) => { const a = n % 100, b = n % 10; return a > 10 && a < 20 ? many : b === 1 ? one : b > 1 && b < 5 ? few : many; };
 const MOBILE = Math.min(screen.width, screen.height) < 700 || matchMedia('(pointer:coarse)').matches;
 const ASSET = D.base + '/3d-assets/';
 const view = $('#to-view'), body = $('[data-body]');
@@ -60,17 +61,32 @@ function fromTemplate(id) {
 let S = fromTemplate(1), sel = null;           // sel: {kind:'zone', id} | {kind:'house'} | null
 const enc = o => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const dec = s => JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/')))));
-try { const m = location.hash.match(/p=([\w-]+)/); if (m) { const o = dec(m[1]); if (o && o.v === 1 && o.zones) S = o; } } catch (e) {}
+/* в ссылке не храним деревья и машину шаблона, если их не меняли: ссылка в 2–3 раза короче */
+const DECOR = ['trees', 'bushes', 'extras'], tplDecor = {};
+function decorOf(tpl) { if (!tplDecor[tpl]) { const keepId = zid, t = TEMPLATES[tpl].make(); zid = keepId; tplDecor[tpl] = JSON.stringify(DECOR.map(k => t[k])); } return JSON.parse(tplDecor[tpl]); }
+const ZDEF = () => ({ kind: 'pave', form: 'kirpich', color: 'osen', pat: 'perevyazka', th: 60, kayma: '', kerb: true, kerbType: KERB_DEF });
+function pack(o) { const c = JSON.parse(JSON.stringify(o)), zd = ZDEF(); c.zones.forEach(z => { for (const k in zd) if (z[k] === zd[k]) delete z[k]; });
+  if (TEMPLATES[c.tpl]) { const d = decorOf(c.tpl); DECOR.forEach((k, i) => { if (JSON.stringify(c[k]) === JSON.stringify(d[i])) delete c[k]; }); } return c; }
+function unpack(o) { if (!o || o.v !== 1 || !Array.isArray(o.zones)) return null; o.zones = o.zones.map(z => ({ ...ZDEF(), ...z })); const d = TEMPLATES[o.tpl] ? decorOf(o.tpl) : [[], [], []]; DECOR.forEach((k, i) => { if (!Array.isArray(o[k])) o[k] = d[i]; }); o.plot = o.plot || { w: 24, d: 24 }; return o; }
+const LS = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } } };
+let fromLink = false;
+try { const m = location.hash.match(/p=([\w-]+)/); if (m) { const o = unpack(dec(m[1])); if (o) { S = o; fromLink = true; } } } catch (e) {}
+if (!fromLink && !new URLSearchParams(location.search).get('forma')) { const o = unpack(LS.get('mw3d')); if (o) S = o; }   // автосохранение: вернулся и видит свой проект
 zid = Math.max(0, ...S.zones.map(z => z.id)) + 1;
 const hist = []; let histPos = -1;
 function commit() {
   const j = JSON.stringify(S);
   if (hist[histPos] === j) return;
   hist.splice(histPos + 1); hist.push(j); if (hist.length > 50) hist.shift(); histPos = hist.length - 1;
-  try { history.replaceState(null, '', location.pathname + location.search + '#p=' + enc(S)); } catch (e) {}
-  $('[data-undo]').disabled = histPos <= 0;
+  saveState();
 }
-function undo() { if (histPos <= 0) return; histPos--; S = JSON.parse(hist[histPos]); sel = null; rebuildAll(); renderPanel(); try { history.replaceState(null, '', location.pathname + '#p=' + enc(S)); } catch (e) {} $('[data-undo]').disabled = histPos <= 0; }
+function saveState() {
+  try { history.replaceState(null, '', location.pathname + location.search + '#p=' + enc(pack(S))); } catch (e) {}
+  LS.set('mw3d', pack(S));
+  $('[data-undo]').disabled = histPos <= 0; $('[data-redo]').disabled = histPos >= hist.length - 1;
+}
+function travel(d) { const n = histPos + d; if (n < 0 || n >= hist.length) return; histPos = n; S = JSON.parse(hist[n]); if (sel && sel.kind === 'zone' && !S.zones.some(z => z.id === sel.id)) sel = null; rebuildAll(); renderPanel(); saveState(); }
+const undo = () => travel(-1), redo = () => travel(1);
 
 /* наличие и цены */
 const formColors = f => Object.keys(D.prices[f] || {});
@@ -401,16 +417,22 @@ function rasterZones() {
   const W = S.plot.w / 2 + 2, Dd = S.plot.d / 2 + 2, X0 = -W, Z0 = -Dd, NX = Math.round(2 * W / G), NZ = Math.round(2 * Dd / G), g = new Int16Array(NX * NZ);
   S.zones.forEach((z, idx) => { const i1 = Math.round((z.x1 - X0) / G), i2 = Math.round((z.x2 - X0) / G), k1 = Math.round((z.z1 - Z0) / G), k2 = Math.round((z.z2 - Z0) / G);
     for (let k = Math.max(0, k1); k < Math.min(NZ, k2); k++) for (let i = Math.max(0, i1); i < Math.min(NX, i2); i++) g[k * NX + i] = idx + 1; });
-  return RS = { X0, Z0, NX, NZ, g };
+  const hm = new Uint8Array(NX * NZ);   // под домом плитки нет: площадь не считаем, бордюр вдоль стены не ставим
+  for (const [x1, z1, x2, z2] of houseBoxes()) { const i1 = Math.round((x1 - X0) / G), i2 = Math.round((x2 - X0) / G), k1 = Math.round((z1 - Z0) / G), k2 = Math.round((z2 - Z0) / G);
+    for (let k = Math.max(0, k1); k < Math.min(NZ, k2); k++) for (let i = Math.max(0, i1); i < Math.min(NX, i2); i++) { g[k * NX + i] = 0; hm[k * NX + i] = 1; } }
+  return RS = { X0, Z0, NX, NZ, g, hm };
 }
+function houseBoxes() { const o = houseSpec(), h = S.house, r = [[h.x - o.w / 2, h.z - o.d / 2, h.x + o.w / 2, h.z + o.d / 2]];
+  if (o.garage) { const gx = h.x + o.w / 2 + 2.4, gz = h.z + o.d / 2 - 3.25; r.push([gx - 2.4, gz - 3.35, gx + 2.4, gz + 3.35]); } return r; }
 const at = (i, k) => i >= 0 && k >= 0 && i < RS.NX && k < RS.NZ ? RS.g[k * RS.NX + i] : 0;
 const cellAt = (x, z) => at(Math.floor((x - RS.X0) / G), Math.floor((z - RS.Z0) / G));
 function outline() {   // внешние края мощения; id = зона внутри
   const s = [], { X0, Z0, NX, NZ } = RS;
-  for (let k = 0; k <= NZ; k++) { let run = null; for (let i = 0; i <= NX; i++) { let t = 0, id = 0; if (i < NX) { const a = at(i, k - 1), b = at(i, k); if (a && !b) { t = 1; id = a; } else if (!a && b) { t = -1; id = b; } }
-    if (run && (run.t !== t || run.id !== id)) { s.push({ x1: X0 + run.i * G, z1: Z0 + k * G, x2: X0 + i * G, z2: Z0 + k * G, nx: 0, nz: run.t, id: run.id }); run = null; } if (t && !run) run = { i, t, id }; } }
-  for (let i = 0; i <= NX; i++) { let run = null; for (let k = 0; k <= NZ; k++) { let t = 0, id = 0; if (k < NZ) { const a = at(i - 1, k), b = at(i, k); if (a && !b) { t = 1; id = a; } else if (!a && b) { t = -1; id = b; } }
-    if (run && (run.t !== t || run.id !== id)) { s.push({ x1: X0 + i * G, z1: Z0 + run.k * G, x2: X0 + i * G, z2: Z0 + k * G, nx: run.t, nz: 0, id: run.id }); run = null; } if (t && !run) run = { k, t, id }; } }
+  const hm = (i, k) => i >= 0 && k >= 0 && i < NX && k < NZ ? RS.hm[k * NX + i] : 0;
+  for (let k = 0; k <= NZ; k++) { let run = null; for (let i = 0; i <= NX; i++) { let t = 0, id = 0; if (i < NX) { const a = at(i, k - 1), b = at(i, k); if (a && !b) { t = 1; id = a * 2 + hm(i, k); } else if (!a && b) { t = -1; id = b * 2 + hm(i, k - 1); } }
+    if (run && (run.t !== t || run.id !== id)) { s.push({ x1: X0 + run.i * G, z1: Z0 + k * G, x2: X0 + i * G, z2: Z0 + k * G, nx: 0, nz: run.t, id: run.id >> 1, house: run.id & 1 }); run = null; } if (t && !run) run = { i, t, id }; } }
+  for (let i = 0; i <= NX; i++) { let run = null; for (let k = 0; k <= NZ; k++) { let t = 0, id = 0; if (k < NZ) { const a = at(i - 1, k), b = at(i, k); if (a && !b) { t = 1; id = a * 2 + hm(i, k); } else if (!a && b) { t = -1; id = b * 2 + hm(i - 1, k); } }
+    if (run && (run.t !== t || run.id !== id)) { s.push({ x1: X0 + i * G, z1: Z0 + run.k * G, x2: X0 + i * G, z2: Z0 + k * G, nx: run.t, nz: 0, id: run.id >> 1, house: run.id & 1 }); run = null; } if (t && !run) run = { k, t, id }; } }
   return s;
 }
 function zoneGeo(z, y) {
@@ -432,6 +454,7 @@ function buildZones() {
   // бордюр снаружи
   kerbLen = {}; const cw = .08, ch = .1, kg = [];
   for (const s of segs) { const z = S.zones[s.id - 1]; if (!z || !z.kerb) continue;
+    if (s.house) continue;
     const L = Math.hypot(s.x2 - s.x1, s.z2 - s.z1), tx = (s.x2 - s.x1) / L, tz = (s.z2 - s.z1) / L; kerbLen[z.id] = (kerbLen[z.id] || 0) + L;
     const e1 = !cellAt(s.x1 - tx * .05 + s.nx * .05, s.z1 - tz * .05 + s.nz * .05) ? cw : 0, e2 = !cellAt(s.x2 + tx * .05 + s.nx * .05, s.z2 + tz * .05 + s.nz * .05) ? cw : 0;
     const b = boxGeo(L + e1 + e2, ch, cw); b.rotateY(Math.atan2(-tz, tx)); const mid = (e2 - e1) / 2; b.translate((s.x1 + s.x2) / 2 + tx * mid + s.nx * cw / 2, ch / 2, (s.z1 + s.z2) / 2 + tz * mid + s.nz * cw / 2); kg.push(b); }
@@ -447,6 +470,7 @@ function buildZones() {
   grassTufts();
   buildFence();
   updateHandles();
+  renderFoot(); renderSwap();
   redraw();
 }
 /* быстрое обновление одной зоны при перетаскивании (без бордюров) */
@@ -514,26 +538,57 @@ function buildWorld() {
   disposeTree(worldG); worldG.clear();
   worldG.add(buildHouse()); const f = houseFoot(); contact(worldG, f[2] - f[0], f[3] - f[1], (f[0] + f[2]) / 2, (f[1] + f[3]) / 2, .38, .8);
   for (const [k, x, z] of S.extras || []) { if (k === 'car') { worldG.add(car(x, z)); contact(worldG, 1.9, 4.4, x, z, .6, .5); } else if (k === 'table') worldG.add(table(x, z)); else if (k === 'gazebo') worldG.add(gazebo(x, z)); }
-  for (const [x, z, s, kind] of S.trees || []) { worldG.add(tree(x, z, s, kind)); contact(worldG, 1.8 * s, 1.8 * s, x, z, .32, 1.4 * s); }
+  for (const [x, z, s, kind] of S.trees || []) { const t = tree(x, z, s, kind); t.userData.tree = true; t.visible = mode !== 'plan'; worldG.add(t); contact(worldG, 1.8 * s, 1.8 * s, x, z, .32, 1.4 * s); }
   for (const [x, z, s] of S.bushes || []) { worldG.add(bush(x, z, s)); contact(worldG, .9 * s, .9 * s, x, z, .4, .4 * s); }
+  buildGrid();
   const R = Math.max(S.plot.w, S.plot.d) * .75 + 4; Object.assign(sun.shadow.camera, { left: -R, right: R, top: R, bottom: -R, near: 2, far: 120 }); sun.shadow.camera.updateProjectionMatrix();
   applyHouseLook();
 }
 function rebuildAll() { buildWorld(); buildZones(); }
+/* сетка 1 м для плана */
+let grid = null;
+function buildGrid() {
+  if (grid) { scene.remove(grid); grid.geometry.dispose(); }
+  const w = S.plot.w, d = S.plot.d, p = [];
+  for (let x = -w / 2; x <= w / 2 + 1e-6; x++) p.push(x, .045, -d / 2, x, .045, d / 2);
+  for (let z = -d / 2; z <= d / 2 + 1e-6; z++) p.push(-w / 2, .045, z, w / 2, .045, z);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
+  grid = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: '#ffffff', transparent: true, opacity: .22, depthWrite: false }));
+  grid.visible = mode === 'plan'; grid.renderOrder = 4; scene.add(grid);
+}
+function planLook(on) {
+  const r = HM.roof; r.transparent = on; r.opacity = on ? .22 : 1; r.depthWrite = !on; r.needsUpdate = true;
+  worldG.children.forEach(o => { if (o.userData.tree) o.visible = !on; });
+  if (grid) grid.visible = on; redraw();
+}
 
 /* ---------- небо HDRI ---------- */
-const pmrem = new THREE.PMREMGenerator(renderer); assetsTotal++;
+const pmrem = new THREE.PMREMGenerator(renderer);   // небо не задерживает старт: участок виден сразу, небо подгружается следом
+const SUN0 = new THREE.Vector3(18, 26, 22); let skyReady = false;
 new RGBELoader().setDataType(THREE.FloatType).load(ASSET + 'sky.hdr', tex => {
   const { data, width: W, height: H } = tex.image, C = data.length / (W * H);
   let best = -1, bi = 0; for (let y = 0; y < H / 2; y++) for (let x = 0; x < W; x++) { const i = (y * W + x) * C, l = data[i] * .2126 + data[i + 1] * .7152 + data[i + 2] * .0722; if (l > best) { best = l; bi = y * W + x; } }
   const row = Math.floor(bi / W), u = (bi % W + .5) / W, v = 1 - (row + .5) / H, phi = (u - .5) * Math.PI * 2, el = Math.min(1, Math.max(.5, (v - .5) * Math.PI)), want = Math.atan2(.78, .62);
   scene.environmentRotation.y = scene.backgroundRotation.y = phi - want;
-  sun.position.set(Math.cos(el) * Math.cos(want), Math.sin(el), Math.cos(el) * Math.sin(want)).multiplyScalar(60);
+  SUN0.set(Math.cos(el) * Math.cos(want), Math.sin(el), Math.cos(el) * Math.sin(want)).multiplyScalar(60);
   let R = 0, Gc = 0, B = 0, n = 0; for (let y = Math.floor(H * .46); y < Math.floor(H * .495); y++) for (let x = 0; x < W; x += 2) { const i = (y * W + x) * C; if (data[i] > 4) continue; R += data[i]; Gc += data[i + 1]; B += data[i + 2]; n++; }
   if (n) scene.fog.color.setRGB(R / n, Gc / n, B / n, THREE.LinearSRGBColorSpace);
   tex.mapping = THREE.EquirectangularReflectionMapping; scene.background = tex; scene.environment = pmrem.fromEquirectangular(tex).texture;
-  scene.environmentIntensity = .95; scene.backgroundIntensity = 1.05; hemi.intensity = .12; progress();
-}, undefined, () => progress());
+  skyReady = true; setLight(light); redraw();
+}, undefined, () => {});
+
+/* освещение: солнце, пасмурно, вечер */
+const LIGHTS = { day: 'Солнце', cloud: 'Пасмурно', eve: 'Вечер' };
+let light = 'day';
+function setLight(k) {
+  light = k; const sky = skyReady;
+  const el = Math.atan2(SUN0.y, Math.hypot(SUN0.x, SUN0.z)), az = Math.atan2(SUN0.z, SUN0.x);
+  const at = e => sun.position.set(Math.cos(e) * Math.cos(az), Math.sin(e), Math.cos(e) * Math.sin(az)).multiplyScalar(60);
+  if (k === 'day') { at(el); sun.color.set('#fff0db'); sun.intensity = 2.7; scene.environmentIntensity = .95; scene.backgroundIntensity = 1.05; renderer.toneMappingExposure = .9; hemi.intensity = sky ? .12 : 1.1; }
+  if (k === 'cloud') { at(el); sun.color.set('#eef2f6'); sun.intensity = .45; scene.environmentIntensity = 1.35; scene.backgroundIntensity = .75; renderer.toneMappingExposure = 1; hemi.intensity = sky ? .55 : 1.6; }
+  if (k === 'eve') { at(.22); sun.color.set('#ffb36b'); sun.intensity = 2.6; scene.environmentIntensity = .6; scene.backgroundIntensity = .6; renderer.toneMappingExposure = 1.05; hemi.intensity = sky ? .08 : .6; }
+  sun.target.position.set(0, 0, 0); $$('[data-light]').forEach(b => b.textContent = LIGHTS[k]); redraw();
+}
 
 /* ---------- камера и режимы ---------- */
 let mode = '3d', tween = null, CLOCK = 0, lastT = 0;
@@ -541,7 +596,17 @@ function cam3d(instant) {
   const w = S.plot.w, d = S.plot.d, tg = new THREE.Vector3(0, .5, d * .12), pos = camera.aspect < 1 ? new THREE.Vector3(w * .2, d * .62, d * .95) : new THREE.Vector3(w * .55, d * .42, d * .82);
   go(pos, tg, instant);
 }
-function camPlan(instant) { const m = Math.max(S.plot.w, S.plot.d * (camera.aspect < 1 ? 1 : .9)) / (camera.aspect < 1 ? camera.aspect : 1); go(new THREE.Vector3(0, m * 1.18, .01), new THREE.Vector3(0, 0, 0), instant); }
+/* виды: общий, с улицы на уровне глаз (от калитки), сбоку */
+const VIEWS = ['Общий вид', 'С улицы', 'Сбоку']; let view3d = 0;
+function camView(i) {
+  view3d = i % VIEWS.length; $$('[data-view]').forEach(b => b.textContent = VIEWS[view3d]);
+  const w = S.plot.w, d = S.plot.d, h = S.house, o = houseSpec();
+  if (view3d === 0) return cam3d();
+  if (view3d === 1) { const fz = S.zones.filter(z => z.z2 >= d / 2 - .3), gx = fz.length ? (fz[0].x1 + fz[0].x2) / 2 : h.x + o.door;
+    return go(new THREE.Vector3(gx, 1.65, d / 2 - .4), new THREE.Vector3(h.x + o.door * .5, 1.2, h.z + o.d / 2)); }
+  go(new THREE.Vector3(-w * .48, 3.4, d * .1), new THREE.Vector3(h.x, .8, h.z + o.d / 2 + 2));
+}
+function camPlan(instant) { const t = Math.tan(camera.fov * Math.PI / 360), dist = Math.max((S.plot.d / 2 + 1) / t, (S.plot.w / 2 + 1) / (t * camera.aspect)) * 1.04; go(new THREE.Vector3(0, dist, .01), new THREE.Vector3(0, 0, 0), instant); }
 function go(pos, tg, instant) { if (instant) { camera.position.copy(pos); controls.target.copy(tg); redraw(false); return; } tween = { t0: CLOCK, p0: camera.position.clone(), g0: controls.target.clone(), p1: pos, g1: tg }; }
 function setMode(m) {
   mode = m; draw = null;
@@ -550,21 +615,35 @@ function setMode(m) {
   controls.enableRotate = m === '3d'; LINE_M.depthTest = HOUSE_LINE.depthTest = m !== '3d';
   controls.mouseButtons.LEFT = m === '3d' ? THREE.MOUSE.ROTATE : THREE.MOUSE.PAN;
   controls.touches.ONE = m === '3d' ? THREE.TOUCH.ROTATE : THREE.TOUCH.PAN;
-  if (m === 'plan') camPlan(); else cam3d();
-  hint(m === 'plan' ? 'Перетаскивайте площадки и дом, тяните за углы. «+ Площадка»: нарисуйте её пальцем или мышью' : '');
+  if (m === 'plan') camPlan(); else camView(0);
+  planLook(m === 'plan'); $$('[data-3d-only]').forEach(e => e.hidden = m !== '3d');
+  hint(m === 'plan' ? (MOBILE ? 'Двигайте площадки и дом пальцем, тяните за углы' : 'Перетаскивайте площадки и дом, тяните за углы. Края прилипают друг к другу') : '');
   updateHandles();
 }
 function resize() { const w = view.clientWidth, h = view.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w / h < 1 ? 55 : 42; camera.updateProjectionMatrix(); redraw(false); }
 new ResizeObserver(resize).observe(view);
+function fitTop() { const t = $('[data-tryon]').getBoundingClientRect().top + scrollY; document.documentElement.style.setProperty('--to-top', Math.round(t) + 'px'); }
+fitTop(); addEventListener('resize', fitTop);
 let hintT = 0; function hint(t, ms = 6000) { const h = $('[data-hint]'); h.textContent = t; h.hidden = !t; clearTimeout(hintT); if (t) hintT = setTimeout(() => h.hidden = true, ms); }
 
 /* ---------- выделение и маркеры ---------- */
 const handlesG = new THREE.Group(); handlesG.renderOrder = 10; scene.add(handlesG);
 const HANDLE_M = new THREE.MeshBasicMaterial({ color: '#8f141c', depthTest: false }), LINE_M = new THREE.LineBasicMaterial({ color: '#8f141c' }), HOUSE_LINE = new THREE.LineBasicMaterial({ color: '#2b6cb0' });
 function rectLine(x1, z1, x2, z2, m) { const g = new THREE.BufferGeometry().setFromPoints([[x1, z1], [x2, z1], [x2, z2], [x1, z2], [x1, z1]].map(([x, z]) => new THREE.Vector3(x, .06, z))); const l = new THREE.Line(g, m); l.renderOrder = 10; return l; }
-function handleSize() { return Math.max(.25, camera.position.distanceTo(controls.target) * .018); }
+function handleSize() { return Math.max(.25, camera.position.distanceTo(controls.target) * (MOBILE ? .03 : .018)); }
+const LBL = new Map(), num = v => (Math.round(v * 10) / 10).toString().replace('.', ',');
+function label(text, on) {   // подпись размера: текстура рисуется один раз на текст
+  const key = text + (on ? '*' : ''); let m = LBL.get(key);
+  if (!m) { if (LBL.size > 150) { LBL.forEach(v => { v.map.dispose(); v.dispose(); }); LBL.clear(); }
+    const c = document.createElement('canvas'), x = c.getContext('2d'), f = 44; x.font = `700 ${f}px Onest, Arial`; const tw = Math.ceil(x.measureText(text).width) + 36;
+    c.width = tw; c.height = f + 24; x.font = `700 ${f}px Onest, Arial`; x.fillStyle = on ? 'rgba(143,20,28,.92)' : 'rgba(28,24,23,.78)'; x.beginPath(); x.roundRect(0, 0, c.width, c.height, 18); x.fill();
+    x.fillStyle = '#fff'; x.textBaseline = 'middle'; x.textAlign = 'center'; x.fillText(text, c.width / 2, c.height / 2 + 2);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; m = new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true }); m.userData.aspect = c.width / c.height; LBL.set(key, m); }
+  const s = new THREE.Sprite(m), h = handleSize() * 1.25; s.scale.set(h * m.userData.aspect, h, 1); s.renderOrder = 12; s.userData.label = true; return s;
+}
 function updateHandles() {
-  handlesG.children.forEach(c => c.geometry.dispose()); handlesG.clear();
+  handlesG.children.forEach(c => { if (!c.userData.label) c.geometry.dispose(); }); handlesG.clear();
+  if (mode === 'plan') S.zones.forEach(z => { const w = z.x2 - z.x1, d = z.z2 - z.z1, on = sel && sel.id === z.id, l = label(`${num(w)} × ${num(d)} м`, on); l.position.set((z.x1 + z.x2) / 2, .3, (z.z1 + z.z2) / 2); handlesG.add(l); });
   if (!sel) { redraw(false); return; }
   if (sel.kind === 'house') { const f = houseFoot(); handlesG.add(rectLine(f[0], f[1], f[2], f[3], HOUSE_LINE)); redraw(false); return; }
   const z = S.zones.find(q => q.id === sel.id); if (!z) { sel = null; return; }
@@ -582,6 +661,16 @@ const clampX = v => Math.max(-S.plot.w / 2, Math.min(S.plot.w / 2, v)), clampZ =
 function zoneAt(p) { for (let i = S.zones.length - 1; i >= 0; i--) { const z = S.zones[i]; if (p.x >= z.x1 && p.x <= z.x2 && p.z >= z.z1 && p.z <= z.z2) return z; } return null; }
 function inHouse(p) { const f = houseFoot(); return p.x >= f[0] && p.x <= f[2] && p.z >= f[1] && p.z <= f[3]; }
 let op = null, draw = null, downXY = null;
+/* магнит: край прилипает к краям других площадок, дома и участка */
+function magnet(edges, axis, self) {
+  const c = [axis === 'x' ? -S.plot.w / 2 : -S.plot.d / 2, axis === 'x' ? S.plot.w / 2 : S.plot.d / 2];
+  for (const z of S.zones) if (z !== self) c.push(...(axis === 'x' ? [z.x1, z.x2] : [z.z1, z.z2]));
+  const f = houseFoot(); for (const b of houseBoxes()) c.push(...(axis === 'x' ? [b[0], b[2]] : [b[1], b[3]]));
+  c.push(axis === 'x' ? f[0] : f[3]);
+  const tol = Math.max(.15, handleSize() * .45); let best = 0, bd = tol;
+  for (const v of c) for (const e of edges) { const d = v - e; if (Math.abs(d) < bd) { bd = Math.abs(d); best = d; } }
+  return +best.toFixed(2);
+}
 view.addEventListener('pointerdown', e => {
   if (e.target !== renderer.domElement || e.button > 0) return;
   downXY = [e.clientX, e.clientY];
@@ -606,12 +695,14 @@ view.addEventListener('pointermove', e => {
     if (!op.zone) { const base = (sel && sel.kind === 'zone' && S.zones.find(q => q.id === sel.id)) || S.zones.filter(q => q.kind === 'pave').slice(-1)[0] || {};
       op.zone = Z(op.x0, op.z0, op.x0 + .4, op.z0 + .4, op.kind === 'grid' ? { kind: 'grid', kerb: false } : { form: base.form || 'kirpich', color: base.color || 'osen', pat: base.pat || 'perevyazka', th: base.th || 60, kayma: base.kayma || '' });
       fixZone(op.zone); S.zones.push(op.zone); buildZones(); sel = { kind: 'zone', id: op.zone.id }; }
-    const zz = op.zone; zz.x1 = Math.min(op.x0, x); zz.x2 = Math.max(op.x0, x); zz.z1 = Math.min(op.z0, z); zz.z2 = Math.max(op.z0, z);
+    const zz = op.zone, mx = x + magnet([x], 'x', zz), mz = z + magnet([z], 'z', zz); zz.x1 = Math.min(op.x0, mx); zz.x2 = Math.max(op.x0, mx); zz.z1 = Math.min(op.z0, mz); zz.z2 = Math.max(op.z0, mz);
     if (zz.x2 - zz.x1 < .4) zz.x2 = zz.x1 + .4; if (zz.z2 - zz.z1 < .4) zz.z2 = zz.z1 + .4; moveZoneMesh(zz);
   } else if (op.t === 'move') {
-    const zz = op.z; zz.x1 = snap(Math.max(-S.plot.w / 2, Math.min(S.plot.w / 2 - op.w, p.x - op.dx))); zz.z1 = snap(Math.max(-S.plot.d / 2, Math.min(S.plot.d / 2 - op.d, p.z - op.dz))); zz.x2 = +(zz.x1 + op.w).toFixed(1); zz.z2 = +(zz.z1 + op.d).toFixed(1); moveZoneMesh(zz);
+    const zz = op.z; let x1 = snap(Math.max(-S.plot.w / 2, Math.min(S.plot.w / 2 - op.w, p.x - op.dx))), z1 = snap(Math.max(-S.plot.d / 2, Math.min(S.plot.d / 2 - op.d, p.z - op.dz)));
+    x1 += magnet([x1, x1 + op.w], 'x', zz); z1 += magnet([z1, z1 + op.d], 'z', zz);
+    zz.x1 = +x1.toFixed(2); zz.z1 = +z1.toFixed(2); zz.x2 = +(x1 + op.w).toFixed(2); zz.z2 = +(z1 + op.d).toFixed(2); moveZoneMesh(zz);
   } else if (op.t === 'resize') {
-    const zz = op.z; zz[op.kx] = x; zz[op.kz] = z;
+    const zz = op.z; zz[op.kx] = +(x + magnet([x], 'x', zz)).toFixed(2); zz[op.kz] = +(z + magnet([z], 'z', zz)).toFixed(2);
     if (zz.x2 - zz.x1 < .4) { if (op.kx === 'x1') zz.x1 = zz.x2 - .4; else zz.x2 = zz.x1 + .4; } if (zz.z2 - zz.z1 < .4) { if (op.kz === 'z1') zz.z1 = zz.z2 - .4; else zz.z2 = zz.z1 + .4; } moveZoneMesh(zz);
   } else if (op.t === 'house') {
     S.house.x = snap(p.x - op.dx); S.house.z = snap(p.z - op.dz); const hm = worldG.children[0]; if (hm) hm.position.set(S.house.x, 0, S.house.z); updateHandles(); redraw(false);
@@ -633,13 +724,23 @@ window.addEventListener('pointerup', e => {
 window.addEventListener('keydown', e => {
   if (e.target.closest('input,textarea,select')) return;
   if ((e.key === 'Delete' || e.key === 'Backspace') && sel && sel.kind === 'zone') { delZone(sel.id); e.preventDefault(); }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { undo(); e.preventDefault(); }
+  const k = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && (k === 'y' || (k === 'z' && e.shiftKey))) { redo(); e.preventDefault(); return; }
+  if ((e.ctrlKey || e.metaKey) && k === 'z') { undo(); e.preventDefault(); return; }
+  const z = sel && sel.kind === 'zone' && S.zones.find(q => q.id === sel.id), dir = { arrowleft: [-1, 0], arrowright: [1, 0], arrowup: [0, -1], arrowdown: [0, 1] }[k];
+  if (z && dir && mode === 'plan') {   // стрелки двигают площадку на 10 см, с Shift на 1 м
+    const s = e.shiftKey ? 1 : .1, w = z.x2 - z.x1, d = z.z2 - z.z1;
+    z.x1 = +Math.max(-S.plot.w / 2, Math.min(S.plot.w / 2 - w, z.x1 + dir[0] * s)).toFixed(2); z.x2 = +(z.x1 + w).toFixed(2);
+    z.z1 = +Math.max(-S.plot.d / 2, Math.min(S.plot.d / 2 - d, z.z1 + dir[1] * s)).toFixed(2); z.z2 = +(z.z1 + d).toFixed(2);
+    moveZoneMesh(z); clearTimeout(window._nt); window._nt = setTimeout(() => { buildZones(); commit(); renderPanel(); }, 350); e.preventDefault();
+  }
 });
 function delZone(id) { S.zones = S.zones.filter(z => z.id !== id); sel = null; buildZones(); commit(); renderPanel(); }
 
 /* ---------- панель ---------- */
 let tab = 'plot';
-function openTab(t) { tab = t; $$('[data-tab]').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t)); renderPanel(); }
+function openTab(t) { tab = t;
+  if (t === 'zone' && !(sel && sel.kind === 'zone') && S.zones.length) { sel = { kind: 'zone', id: S.zones[0].id }; updateHandles(); } $$('[data-tab]').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t)); renderPanel(); }
 $$('[data-tab]').forEach(b => b.addEventListener('click', () => openTab(b.dataset.tab)));
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const dots = (list, cur, attr, custom) => '<div class="dots">' + list.map(([n, h]) => `<button type="button" class="dot-b" ${attr}="${h}" title="${esc(n)}" aria-label="${esc(n)}" aria-pressed="${h.toLowerCase() === String(cur).toLowerCase()}" style="background:${h}"></button>`).join('') + (custom ? `<label class="to-custom" title="Свой цвет"><input type="color" ${attr}-custom value="${cur}">свой</label>` : '') + '</div>';
@@ -657,6 +758,11 @@ function renderPanel() {
     html += `<div class="to-sec"><div class="to-row"><h3>Площадки и дорожки</h3><span>${S.zones.length}</span></div><div class="to-zones">${S.zones.map((q, i) => zoneRow(q, i)).join('') || '<div class="to-empty">Площадок нет. Нажмите «План» и «+ Площадка».</div>'}</div>
       <div class="to-btns" style="margin-top:10px"><button type="button" class="btn btn-line" data-add="pave">+ Площадка</button><button type="button" class="btn btn-line" data-add="grid">+ Газонная решётка</button></div>
       <p class="to-note">В режиме «План» площадки и дом можно перетаскивать, а размер менять за углы.</p></div>`;
+    const vars = LS.get('mw3d_vars') || [];
+    html += `<div class="to-sec"><div class="to-row"><h3>Мои варианты</h3><span>${vars.length} из 4</span></div>
+      ${vars.length ? `<div class="to-vars">${vars.map((v, n) => `<div class="to-var"><button type="button" data-var="${n}" title="Открыть вариант"><img src="${v.img}" alt=""><span>${esc(v.name)}<small>≈ ${fmt(v.total)} ₽</small></span></button><button type="button" class="to-x" data-vdel="${n}" aria-label="Удалить вариант">×</button></div>`).join('')}</div>` : ''}
+      <div class="to-btns" style="margin-top:8px"><button type="button" class="btn btn-line" data-vsave ${vars.length >= 4 ? 'disabled' : ''}>Сохранить как вариант</button><button type="button" class="btn btn-line" data-reset>Начать заново</button></div>
+      <p class="to-note">Сохраните 2–3 варианта цвета и сравните: они останутся в этом браузере.</p></div>`;
   } else if (tab === 'house') {
     const fc = h.facade.m === 'brick' ? BRICK_COLORS : h.facade.m === 'wood' || h.facade.m === 'siding' ? (h.facade.m === 'wood' ? WOOD_COLORS : FACADE_COLORS) : FACADE_COLORS;
     html += `<div class="to-sec"><h3>Дом</h3><div class="to-cards">${Object.entries(HOUSES).map(([k, o]) => card('data-house', k, h.type, o.name, o.sub)).join('')}</div></div>`;
@@ -673,12 +779,12 @@ function renderPanel() {
     if (!z) html += `<div class="to-empty">Выберите площадку: нажмите на неё на участке или в списке.</div><div class="to-zones" style="margin-top:10px">${S.zones.map((q, i) => zoneRow(q, i)).join('')}</div>`;
     else html += zonePanel(z);
   } else if (tab === 'sum') html += sumPanel();
-  body.innerHTML = html;
+  body.innerHTML = html; renderFoot(); renderSwap();
 }
 function zoneRow(q, i) {
   const a = areas[S.zones.indexOf(q) + 1] || 0, sw = q.kind === 'grid' ? 'repeating-conic-gradient(#9d968c 0 25%,#6e9b48 0 50%) 0 0/10px 10px' : swatch((D.colors[q.color] || {}).pal || []);
-  const sub = q.kind === 'grid' ? 'газонная решётка' : `${(FORMS[q.form] || {}).name || ''} · ${(D.colors[q.color] || {}).name || ''}`;
-  return `<button type="button" class="to-zone" data-zsel="${q.id}" aria-pressed="${sel && sel.id === q.id}"><i style="background:${sw}"></i><span>${esc(zoneName(q, i))}<small>${esc(sub)} · ${a.toFixed(1).replace('.', ',')} м²</small></span></button>`;
+  const sub = q.kind === 'grid' ? 'газонная решётка' : `${(FORMS[q.form] || {}).name || ''} · ${(D.colors[q.color] || {}).name || ''}`, pr = zPrice(q), sum = pr ? Math.round(a * (q.kind === 'grid' ? 1.05 : 1.07) * pr / 100) * 100 : 0;
+  return `<button type="button" class="to-zone" data-zsel="${q.id}" aria-pressed="${sel && sel.id === q.id}"><i style="background:${sw}"></i><span>${esc(zoneName(q, i))}<small>${esc(sub)} · ${num(a)} м²</small></span>${sum ? `<b>${fmt(sum)} ₽</b>` : ''}</button>`;
 }
 function zonePanel(z) {
   const i = S.zones.indexOf(z), a = areas[i + 1] || 0;
@@ -694,23 +800,25 @@ function zonePanel(z) {
     h += `<div class="to-sec"><div class="to-row"><b>Кайма по краю</b><span>${z.kayma ? esc(D.colors[z.kayma].name) : 'нет'}</span></div><div class="dots"><button type="button" class="dot-b" data-zkay="" aria-pressed="${!z.kayma}" title="Без каймы" aria-label="Без каймы" style="background:#fff;box-shadow:inset 0 0 0 2px #ddd"></button>${formColors('kirpich').map(c => `<button type="button" class="dot-b" data-zkay="${c}" aria-pressed="${c === z.kayma}" title="${esc(D.colors[c].name)}" aria-label="${esc(D.colors[c].name)}" style="background:${swatch(D.colors[c].pal)}"></button>`).join('')}</div></div>`;
   }
   h += `<div class="to-sec"><label class="to-check"><input type="checkbox" data-zkerb ${z.kerb ? 'checked' : ''}> Бордюр по краю</label>${z.kerb && D.kerbs.length ? `<select data-zkt style="margin-top:8px">${D.kerbs.map((k, n) => `<option value="${n}" ${n === z.kerbType ? 'selected' : ''}>${esc(k.name)}${k.price ? ' · ' + fmt(k.price) + ' ₽/шт' : ''}</option>`).join('')}</select>` : ''}</div>`;
-  h += `<div class="to-btns">${z.kind === 'pave' ? `<button type="button" class="btn btn-line" data-zall>Применить ко всем площадкам</button>` : ''}<button type="button" class="btn btn-line" data-zdel style="color:#c62828;border-color:#f0c9c9">Удалить</button></div>`;
+  h += `<div class="to-btns">${z.kind === 'pave' ? `<button type="button" class="btn btn-line" data-zall>Применить ко всем площадкам</button>` : ''}<button type="button" class="btn btn-line" data-zdup>Копировать</button><button type="button" class="btn btn-line" data-zrot>Повернуть</button><button type="button" class="btn btn-line" data-zdel style="color:#c62828;border-color:#f0c9c9">Удалить</button></div>`;
   if (z.kind === 'pave' && FORMS[z.form]) h += `<p class="to-note"><a href="${FORMS[z.form].url}?cvet=${z.color}" target="_blank">Открыть «${esc(FORMS[z.form].name)}» в каталоге ↗</a></p>`;
   return h;
 }
 function calc() {
   const rows = []; let total = 0;
   S.zones.forEach((z, i) => { const a = areas[i + 1] || 0; if (a <= 0) return; const res = z.kind === 'grid' ? 1.05 : 1.07, m2 = a * res, pr = zPrice(z), sum = pr ? Math.round(m2 * pr / 100) * 100 : 0; total += sum;
-    rows.push({ name: zoneName(z, i), what: z.kind === 'grid' ? 'Газонная решётка' : `«${(FORMS[z.form] || {}).name}» ${(D.colors[z.color] || {}).name}, ${PATTERN_NAMES[z.pat].toLowerCase()}, ${z.th} мм`, m2, pr, sum, a });
+    const perPal = z.kind === 'pave' && FORMS[z.form] ? FORMS[z.form].m2 : 0, pal = perPal ? Math.ceil(m2 / perPal) : 0;
+    rows.push({ name: zoneName(z, i), what: z.kind === 'grid' ? 'Газонная решётка' : `«${(FORMS[z.form] || {}).name}» ${(D.colors[z.color] || {}).name}, ${PATTERN_NAMES[z.pat].toLowerCase()}, ${z.th} мм`, m2, pr, sum, a, pal });
     if (z.kerb && kerbLen[z.id] && D.kerbs[z.kerbType]) { const k = D.kerbs[z.kerbType], n = Math.ceil(kerbLen[z.id] / k.len), s = k.price ? n * k.price : 0; total += s; rows.push({ name: 'Бордюр: ' + zoneName(z, i), what: k.name, pcs: n, pr: k.price, sum: s }); } });
   return { rows, total };
 }
 function sumPanel() {
   const { rows, total } = calc();
   if (!rows.length) return '<div class="to-empty">Добавьте площадку, и здесь появится смета.</div>';
-  let h = '<table class="to-sum">' + rows.map(r => `<tr><td>${esc(r.name)}<small>${esc(r.what)}${r.m2 ? ` · ${r.a.toFixed(1).replace('.', ',')} м², с запасом ${r.m2.toFixed(1).replace('.', ',')} м²` : ` · ${r.pcs} шт`}</small></td><td>${r.sum ? fmt(r.sum) + ' ₽' : 'по запросу'}</td></tr>`).join('') + '</table>';
-  h += `<div class="to-total"><span>Примерно, без доставки</span><b>≈ ${fmt(Math.round(total / 500) * 500)} ₽</b></div>`;
-  h += `<div class="to-btns"><button type="button" class="btn btn-brand" data-send>Отправить проект менеджеру</button><button type="button" class="btn btn-line" data-shot>Сохранить картинку</button><button type="button" class="btn btn-line" data-copy>Скопировать ссылку</button></div>`;
+  const pals = rows.reduce((s, r) => s + (r.pal || 0), 0);
+  let h = '<table class="to-sum">' + rows.map(r => `<tr><td>${esc(r.name)}<small>${esc(r.what)}${r.m2 ? ` · ${num(r.a)} м², с запасом ${num(r.m2)} м²${r.pal ? `, ≈ ${r.pal} ${plural(r.pal, 'поддон', 'поддона', 'поддонов')}` : ''}` : ` · ${r.pcs} шт`}</small></td><td>${r.sum ? fmt(r.sum) + ' ₽' : 'по запросу'}</td></tr>`).join('') + '</table>';
+  h += `<div class="to-total"><span>Примерно, без доставки${pals ? `<small>около ${pals} ${plural(pals, 'поддона', 'поддонов', 'поддонов')} плитки</small>` : ''}</span><b>≈ ${fmt(Math.round(total / 500) * 500)} ₽</b></div>`;
+  h += `<div class="to-btns"><button type="button" class="btn btn-brand" data-send>Отправить проект менеджеру</button><button type="button" class="btn btn-line" data-share>Поделиться</button><button type="button" class="btn btn-line" data-shot>Сохранить картинку</button><button type="button" class="btn btn-line" data-copy>Скопировать ссылку</button></div>`;
   h += `<p class="to-note">Запас на подрезку: 7% для плитки, 5% для решётки. Цены из каталога, точный расчёт с доставкой пришлёт менеджер.</p><p class="to-note">${esc(D.disclaimer)}</p>`;
   return h;
 }
@@ -737,6 +845,16 @@ body.addEventListener('click', e => {
   else if (z && 'zkay' in d) { z.kayma = d.zkay; zones = true; }
   else if (z && 'zall' in d) { S.zones.filter(q => q.kind === 'pave').forEach(q => { q.form = z.form; q.color = z.color; q.pat = z.pat; q.th = z.th; fixZone(q); }); zones = true; hint('Применено ко всем площадкам'); }
   else if (z && 'zdel' in d) { delZone(z.id); return; }
+  else if (z && 'zdup' in d) { const w = z.x2 - z.x1, dd = z.z2 - z.z1, c = { ...z, id: zid++ };
+    if (z.x2 + w <= S.plot.w / 2) { c.x1 = z.x2; c.x2 = z.x2 + w; } else if (z.x1 - w >= -S.plot.w / 2) { c.x1 = z.x1 - w; c.x2 = z.x1; } else { c.z1 = Math.min(S.plot.d / 2 - dd, z.z2); c.z2 = c.z1 + dd; }
+    S.zones.push(c); sel = { kind: 'zone', id: c.id }; zones = true; hint('Копия стоит рядом. Передвиньте её в «Плане»', 3500); }
+  else if (z && 'zrot' in d) { const cx = (z.x1 + z.x2) / 2, cz = (z.z1 + z.z2) / 2, w = z.z2 - z.z1, dd = z.x2 - z.x1;
+    z.x1 = snap(Math.max(-S.plot.w / 2, Math.min(S.plot.w / 2 - w, cx - w / 2))); z.x2 = +(z.x1 + w).toFixed(2); z.z1 = snap(Math.max(-S.plot.d / 2, Math.min(S.plot.d / 2 - dd, cz - dd / 2))); z.z2 = +(z.z1 + dd).toFixed(2); zones = true; }
+  else if ('vsave' in d) { saveVariant(); return; }
+  else if (d.var) { const v = (LS.get('mw3d_vars') || [])[+d.var]; const o = v && unpack(v.s); if (!o) return; S = o; zid = Math.max(0, ...S.zones.map(q => q.id)) + 1; sel = null; world = zones = true; look = true; hint('Открыт вариант «' + v.name + '»', 2500); }
+  else if (d.vdel) { const vars = LS.get('mw3d_vars') || []; vars.splice(+d.vdel, 1); LS.set('mw3d_vars', vars); renderPanel(); return; }
+  else if ('reset' in d) { if (!confirm('Начать заново? Текущий проект сбросится (сохранённые варианты останутся).')) return; S = fromTemplate(1); S.zones.forEach(fixZone); zid = Math.max(0, ...S.zones.map(q => q.id)) + 1; sel = null; world = zones = true; look = true; cam3d(); }
+  else if ('share' in d) { shareProject(); return; }
   else if ('send' in d) { sendProject(); return; }
   else if ('shot' in d) { saveShot(); return; }
   else if ('copy' in d) { copyLink(); return; }
@@ -763,25 +881,73 @@ body.addEventListener('change', e => {
 /* инструменты над сценой */
 $$('[data-mode]').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
 $$('[data-draw]').forEach(b => b.addEventListener('click', () => { draw = draw === b.dataset.draw ? null : b.dataset.draw; $$('[data-draw]').forEach(x => x.setAttribute('aria-pressed', x.dataset.draw === draw)); hint(draw ? 'Проведите пальцем или мышью по участку, чтобы нарисовать прямоугольник' : ''); }));
-$('[data-undo]').addEventListener('click', undo);
+$('[data-undo]').addEventListener('click', undo); $('[data-redo]').addEventListener('click', redo);
+$('[data-view]').addEventListener('click', () => camView(view3d + 1));
+$('[data-light]').addEventListener('click', () => { const k = Object.keys(LIGHTS); setLight(k[(k.indexOf(light) + 1) % k.length]); });
+view.addEventListener('pointerdown', () => { if (CLOCK > 1500) $('[data-hint]').hidden = true; });
+
+/* быстрая смена цвета прямо на сцене: для выбранной площадки или для всех сразу */
+function swapTarget() { const z = sel && sel.kind === 'zone' && S.zones.find(q => q.id === sel.id); if (z && z.kind === 'pave') return [z]; return S.zones.filter(q => q.kind === 'pave'); }
+function renderSwap() {
+  const el = $('[data-swap]'), t = swapTarget(); el.hidden = !t.length; if (!t.length) return;
+  $('[data-swt]').textContent = t.length === 1 && sel && sel.kind === 'zone' ? zoneName(t[0], S.zones.indexOf(t[0])) : 'Все площадки';
+  const same = t.every(q => q.color === t[0].color); $('[data-swn]').textContent = same ? (D.colors[t[0].color] || {}).name : 'разные цвета';
+}
+$$('[data-sw]').forEach(b => b.addEventListener('click', () => {
+  const t = swapTarget(); if (!t.length) return; const cols = formColors(t[0].form), i = cols.indexOf(t[0].color), c = cols[(i + +b.dataset.sw + cols.length) % cols.length];
+  t.forEach(z => { if (D.prices[z.form] && D.prices[z.form][c]) { z.color = c; fixZone(z); const m = zoneMeshes.get(z.id); if (m) m.material = zoneMat(z); } });
+  redraw(false); commit(); renderPanel();
+}));
+/* плашка с ценой всегда на виду */
+function renderFoot() {
+  const { total } = calc(), area = S.zones.reduce((s, z, i) => s + (areas[i + 1] || 0), 0);
+  $('[data-foot]').innerHTML = total ? `<div><small>${num(area)} м² · без доставки</small><b>≈ ${fmt(Math.round(total / 500) * 500)} ₽</b></div><button type="button" class="btn btn-brand" data-send>Отправить проект</button>` : `<div><small>Смета</small><b>Нарисуйте площадку</b></div>`;
+}
+$('[data-foot]').addEventListener('click', e => { if (e.target.closest('[data-send]')) sendProject(); });
 $$('.to-tools [data-shot]').forEach(b => b.addEventListener('click', saveShot));
 
 /* ---------- картинка, ссылка, заявка ---------- */
-function snapshot(maxW = 1600) {
-  const hs = handlesG.visible; handlesG.visible = false; renderer.render(scene, camera); handlesG.visible = hs;
-  const src = renderer.domElement, k = Math.min(1, maxW / src.width), W = Math.round(src.width * k), H = Math.round(src.height * k), u = Math.round(Math.max(44, W * .045));
-  const m = document.createElement('canvas').getContext('2d'), fs = Math.max(12, Math.round(u * .26)); m.font = `500 ${fs}px Onest, Arial`;
+function render3() { const hs = handlesG.visible; handlesG.visible = false; renderer.render(scene, camera); handlesG.visible = hs; redraw(false); return renderer.domElement; }
+function snapshot(maxW = 1600, list = true) {
+  const src = render3(), k = Math.min(1, maxW / src.width), W = Math.round(src.width * k), H = Math.round(src.height * k), u = Math.round(Math.max(44, W * .045));
+  const m = document.createElement('canvas').getContext('2d'), fs = Math.max(12, Math.round(u * .26)), ls = Math.round(fs * 1.12); m.font = `500 ${fs}px Onest, Arial`;
   const lines = []; let cur = ''; for (const w of String(D.disclaimer).split(/\s+/)) { const t = cur ? cur + ' ' + w : w; if (m.measureText(t).width > W - u * .8 && cur) { lines.push(cur); cur = w; } else cur = t; } if (cur) lines.push(cur);
-  const band = Math.round(u * .62 + lines.length * fs * 1.3 + u * .2);
+  const { rows, total } = calc(), mats = list ? rows.map(r => [`${r.name}: ${r.what}${r.m2 ? ', ' + num(r.a) + ' м²' : ', ' + r.pcs + ' шт'}`, r.sum ? fmt(r.sum) + ' ₽' : '']) : [];
+  const listH = mats.length ? mats.length * ls * 1.35 + ls * 2 : 0, band = Math.round(u * .62 + listH + lines.length * fs * 1.3 + u * .25);
   const c = document.createElement('canvas'); c.width = W; c.height = H + band; const x = c.getContext('2d');
-  x.drawImage(src, 0, 0, W, H); x.fillStyle = '#1c1817'; x.fillRect(0, H, W, band);
-  x.fillStyle = '#fff'; x.font = `700 ${Math.round(u * .34)}px Onest, Arial`; x.textBaseline = 'middle'; x.fillText(D.brand + ' · ' + D.phone, u * .4, H + u * .36);
-  x.fillStyle = '#d4cac5'; x.font = m.font; lines.forEach((l, i) => x.fillText(l, u * .4, H + u * .62 + fs * .65 + i * fs * 1.3));
-  redraw(false); return c;
+  x.drawImage(src, 0, 0, W, H); x.fillStyle = '#1c1817'; x.fillRect(0, H, W, band); x.textBaseline = 'middle';
+  x.fillStyle = '#fff'; x.font = `700 ${Math.round(u * .34)}px Onest, Arial`; x.fillText(D.brand + ' · ' + D.phone, u * .4, H + u * .36);
+  let y = H + u * .62 + ls * .6;
+  if (mats.length) {
+    x.font = `500 ${ls}px Onest, Arial`;
+    for (const [t, p] of mats) { const pw = p ? x.measureText(p).width : 0; let s = t; while (x.measureText(s).width > W - u * 1.2 - pw && s.length > 10) s = s.slice(0, -2); if (s !== t) s = s.trim() + '…';
+      x.fillStyle = '#efe7e3'; x.textAlign = 'left'; x.fillText(s, u * .4, y); if (p) { x.textAlign = 'right'; x.fillText(p, W - u * .4, y); } y += ls * 1.35; }
+    x.font = `700 ${Math.round(ls * 1.15)}px Onest, Arial`; x.fillStyle = '#fff'; x.textAlign = 'left'; x.fillText('Итого примерно, без доставки', u * .4, y + ls * .2); x.textAlign = 'right'; x.fillText('≈ ' + fmt(Math.round(total / 500) * 500) + ' ₽', W - u * .4, y + ls * .2); x.textAlign = 'left'; y += ls * 1.8;
+  }
+  x.fillStyle = '#d4cac5'; x.font = m.font; lines.forEach((l, i) => x.fillText(l, u * .4, y + i * fs * 1.3));
+  return c;
+}
+function thumb() { const src = render3(), W = 320, H = Math.round(W * src.height / src.width), c = document.createElement('canvas'); c.width = W; c.height = H; c.getContext('2d').drawImage(src, 0, 0, W, H); return c.toDataURL('image/jpeg', .7); }
+function saveVariant() {
+  const vars = LS.get('mw3d_vars') || []; if (vars.length >= 4) return;
+  const pv = S.zones.filter(q => q.kind === 'pave'), forms = [...new Set(pv.map(q => (FORMS[q.form] || {}).name))], cols = [...new Set(pv.map(q => (D.colors[q.color] || {}).name))];
+  const name = pv.length ? `${forms.join(' + ')}, ${cols.slice(0, 2).join(' + ')}${cols.length > 2 ? '…' : ''}` : 'Вариант ' + (vars.length + 1);
+  vars.push({ name, total: Math.round(calc().total / 500) * 500, img: thumb(), s: pack(S) });
+  if (!LS.set('mw3d_vars', vars)) { hint('Не удалось сохранить: браузер запретил хранение', 3500); return; }
+  hint('Вариант сохранён. Меняйте дальше и сравнивайте', 3000); renderPanel();
 }
 function saveShot() { const c = snapshot(); const a = document.createElement('a'); a.download = 'proekt-monolit-west.jpg'; a.href = c.toDataURL('image/jpeg', .9); a.click(); }
-function projectLink() { return D.site.replace(/\/$/, '') + '/3d/#p=' + enc(S); }
+function projectLink() { return D.site.replace(/\/$/, '') + '/3d/#p=' + enc(pack(S)); }
 function copyLink() { const l = projectLink(); (navigator.clipboard ? navigator.clipboard.writeText(l) : Promise.reject()).then(() => hint('Ссылка скопирована: её можно отправить родным или менеджеру', 3500)).catch(() => prompt('Ссылка на проект:', l)); }
+async function shareProject() {   // на телефоне: системное меню (MAX, WhatsApp, почта) с картинкой и ссылкой
+  const l = projectLink(), text = 'Мой проект двора в 3D-примерочной ' + D.brand;
+  try {
+    const blob = await new Promise(r => snapshot(1280).toBlob(r, 'image/jpeg', .85)), file = new File([blob], 'proekt-monolit-west.jpg', { type: 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: text, text: text + ': ' + l }); return; }
+    if (navigator.share) { await navigator.share({ title: text, text, url: l }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  copyLink();
+}
 function projectText() {
   const h = S.house, { rows, total } = calc();
   return [`Дом: ${HOUSES[h.type].name}; фасад: ${FACADE_MATS[h.facade.m]} ${nameOf(h.facade.m === 'brick' ? BRICK_COLORS : h.facade.m === 'wood' ? WOOD_COLORS : FACADE_COLORS, h.facade.c)}; крыша: ${ROOF_MATS[h.roof.m]} ${nameOf(RAL, h.roof.c)}`,
