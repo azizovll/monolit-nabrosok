@@ -57,14 +57,28 @@ export function layout(slug, pat) {
   return r;
 }
 
+/* два цвета в одной площадке: микс (камни вперемешку), полосы (каждый P-й ряд), шахматка (клетки около 0,6 м) */
+export const MIX_NAMES = { mix: 'Микс', stripes: 'Полосы', chess: 'Шахматка' };
+function rowH(slug) { const f = formSpec(slug); return f.mix ? f.mix.h : 1; }
+function stripeP(slug) { const f = formSpec(slug), rows = f.N / rowH(slug); return rows % 5 === 0 ? 5 : 4; }
+function chessC(slug) { const f = formSpec(slug); let best = f.N / 2, bd = 9; for (let c = 2; c <= f.N / 2; c++) if (f.N % c === 0 && (f.N / c) % 2 === 0 && Math.abs(c * f.u - .6) < bd) { bd = Math.abs(c * f.u - .6); best = c; } return best; }
+/* доля второго цвета: для сметы */
+export function mixShare(slug, mode) { return mode === 'stripes' ? 1 / stripeP(slug) : mode === 'mix' || mode === 'chess' ? .5 : 0; }
+function chooser(slug, mode, N) {
+  if (mode === 'stripes') { const h = rowH(slug), P = stripeP(slug); return (rx, ry, rw, rh) => Math.floor(((ry + rh / 2) % N) / h) % P === P - 1; }
+  if (mode === 'chess') { const C = chessC(slug); return (rx, ry, rw, rh) => (Math.floor(((rx + rw / 2) % N) / C) + Math.floor(((ry + rh / 2) % N) / C)) % 2 === 1; }
+  return (rx, ry, rw, rh, r) => r() < .5;
+}
+
 /* rects в единицах; s пикселей на единицу; u размер единицы в метрах (для шва и фаски в мм) */
-export function paint(rects, N, s, u, pal, seed, NY) {
+export function paint(rects, N, s, u, pal, seed, NY, pal2, second) {
   const W = N * s, H = (NY || N) * s, NP = W * H, r = rng(seed), ny = NY || N;
   const col = new Uint8ClampedArray(NP * 4), hgt = new Float32Array(NP), rgh = new Uint8ClampedArray(NP * 4);
   for (let i = 0; i < NP; i++) { const n = HT[(i * 7919) & 65535]; hgt[i] = .1 + .025 * n; const c = 112 + n * 34; col[i * 4] = c + 10; col[i * 4 + 1] = c + 2; col[i * 4 + 2] = c - 14; col[i * 4 + 3] = 255; rgh[i * 4] = rgh[i * 4 + 1] = rgh[i * 4 + 2] = 250; rgh[i * 4 + 3] = 255; }
   const pxm = s / u, j = Math.max(1.2, .0045 * pxm), bv = Math.max(1.6, .012 * pxm);
   for (const [rx, ry, rw, rh] of rects) {
-    const A = hexRgb(pick(pal, r)), B = hexRgb(pick(pal, r)), k = (r() - .5) * .11, hOff = (r() - .5) * .07, tX = (r() - .5) * .05, tY = (r() - .5) * .05, n1 = r() * 64, n2 = r() * 64, rough = .82 + r() * .12, mix = .55 + r() * .35;
+    const P = pal2 && second(rx, ry, rw, rh, r) ? pal2 : pal;
+    const A = hexRgb(pick(P, r)), B = hexRgb(pick(P, r)), k = (r() - .5) * .11, hOff = (r() - .5) * .07, tX = (r() - .5) * .05, tY = (r() - .5) * .05, n1 = r() * 64, n2 = r() * 64, rough = .82 + r() * .12, mix = .55 + r() * .35;
     for (const ox of [-N, 0, N]) for (const oy of [-ny, 0, ny]) {
       const X0 = (rx + ox) * s + j / 2, Y0 = (ry + oy) * s + j / 2, w = rw * s - j, h = rh * s - j;
       const xa = Math.max(0, Math.floor(X0)), xb = Math.min(W, Math.ceil(X0 + w)), ya = Math.max(0, Math.floor(Y0)), yb = Math.min(H, Math.ceil(Y0 + h));
@@ -96,5 +110,6 @@ export function build(job) {
   if (job.pat === 'soldier') return paint(layout('kirpich', 'soldier'), 40, job.s, .1, job.pal, job.seed, 2);
   const f = formSpec(job.slug);
   const pat = job.pat === 'elka45' ? 'elka' : job.pat === 'haos90' ? 'haos' : job.pat;
-  return paint(layout(job.slug, pat), f.N, Math.max(8, Math.round(job.px / f.N)), f.u, job.pal, job.seed);
+  const pal2 = job.pal2 && job.pal2.length ? job.pal2 : null;
+  return paint(layout(job.slug, pat), f.N, Math.max(8, Math.round(job.px / f.N)), f.u, job.pal, job.seed, null, pal2, pal2 ? chooser(job.slug, job.mix || 'mix', f.N) : null);
 }

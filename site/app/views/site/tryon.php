@@ -10,11 +10,32 @@
       <div class="to-r">
         <button type="button" class="tbtn ico" data-undo title="Отменить (Ctrl+Z)" aria-label="Отменить">↶</button>
         <button type="button" class="tbtn ico" data-redo title="Повторить (Ctrl+Y)" aria-label="Повторить">↷</button>
-        <button type="button" class="tbtn" data-shot title="Сохранить картинку"><span class="to-long">Картинка</span><span class="to-short">Фото</span></button>
+        <button type="button" class="tbtn" data-photo aria-pressed="false" title="Примерить плитку на фото своего двора"><span class="to-long">На своём фото</span><span class="to-short">Своё фото</span></button>
+        <button type="button" class="tbtn" data-shot title="Сохранить картинку"><span class="to-long">Картинка</span><span class="to-short">Скачать</span></button>
       </div>
       <div class="to-v" data-3d-only>
         <button type="button" class="tbtn" data-view title="Сменить вид">Общий вид</button>
         <button type="button" class="tbtn" data-light title="Освещение">Солнце</button>
+      </div>
+    </div>
+    <div class="to-photo" data-photo-ui hidden>
+      <canvas data-pc></canvas>
+      <svg class="to-ph-svg" data-ph-svg><polygon data-ph-poly></polygon></svg>
+      <div class="to-ph-h" data-ph="0" title="Ближний левый угол"></div><div class="to-ph-h" data-ph="1" title="Ближний правый угол"></div>
+      <div class="to-ph-h" data-ph="2" title="Дальний правый угол"></div><div class="to-ph-h" data-ph="3" title="Дальний левый угол"></div>
+      <div class="to-ph-empty" data-ph-empty>
+        <div>
+          <b>Примерьте плитку на фото своего двора</b>
+          <p>Сфотографируйте место, где будет дорожка или площадка, лучше с высоты роста и при дневном свете. Потом отметьте 4 угла, и плитка ляжет в перспективе.</p>
+          <label class="btn btn-brand">Выбрать или снять фото<input type="file" accept="image/*" data-ph-file hidden></label>
+          <small>Фото не загружается на сервер. Менеджер увидит его, только если вы отправите проект.</small>
+        </div>
+      </div>
+      <div class="to-ph-bar" data-ph-bar hidden>
+        <label>Ширина<input type="number" min="0.5" max="50" step="0.1" value="3" data-ph-w>м</label>
+        <label>Глубина<input type="number" min="0.5" max="50" step="0.1" value="4" data-ph-d>м</label>
+        <label class="to-ph-light">Яркость<input type="range" min="0.5" max="1.6" step="0.05" value="1" data-ph-g></label>
+        <label class="tbtn">Другое фото<input type="file" accept="image/*" data-ph-file hidden></label>
       </div>
     </div>
     <div class="to-hint" data-hint hidden></div>

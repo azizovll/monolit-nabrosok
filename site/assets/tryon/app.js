@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
-import { formSpec, period, PATTERN_NAMES, PATTERN_ROT, rng, vn } from 'tryon/paving';
+import { formSpec, period, PATTERN_NAMES, PATTERN_ROT, MIX_NAMES, mixShare, rng, vn } from 'tryon/paving';
 
 const D = JSON.parse(document.getElementById('tryon-data').textContent);
 const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => [...(r || document).querySelectorAll(s)];
@@ -36,7 +36,7 @@ const KERB_DEF = Math.max(0, D.kerbs.findIndex(k => /20\.8/.test(k.name)));
 
 /* ---------- шаблоны участков (координаты для участка 24×24, улица со стороны +z) ---------- */
 let zid = 1;
-const Z = (x1, z1, x2, z2, o = {}) => ({ id: zid++, x1, z1, x2, z2, kind: 'pave', form: 'kirpich', color: 'osen', pat: 'perevyazka', th: 60, kayma: '', kerb: true, kerbType: KERB_DEF, ...o });
+const Z = (x1, z1, x2, z2, o = {}) => ({ id: zid++, x1, z1, x2, z2, kind: 'pave', form: 'kirpich', color: 'osen', pat: 'perevyazka', th: 60, kayma: '', kerb: true, kerbType: KERB_DEF, color2: '', mix: 'mix', ...o });
 const TEMPLATES = {
   1: { name: 'Дорожка и терраса', sub: 'одноэтажный дом', make: () => ({ house: { type: 'one', x: 0, z: -4 },
     zones: [Z(-5.5, 0, 5.5, 1.2, { color: 'kapuchino' }), Z(-2.7, 1.2, -1.3, 12), Z(1.5, 1.2, 5.5, 4.4, { pat: 'elka' })],
@@ -64,7 +64,7 @@ const dec = s => JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g, '+').
 /* в ссылке не храним деревья и машину шаблона, если их не меняли: ссылка в 2–3 раза короче */
 const DECOR = ['trees', 'bushes', 'extras'], tplDecor = {};
 function decorOf(tpl) { if (!tplDecor[tpl]) { const keepId = zid, t = TEMPLATES[tpl].make(); zid = keepId; tplDecor[tpl] = JSON.stringify(DECOR.map(k => t[k])); } return JSON.parse(tplDecor[tpl]); }
-const ZDEF = () => ({ kind: 'pave', form: 'kirpich', color: 'osen', pat: 'perevyazka', th: 60, kayma: '', kerb: true, kerbType: KERB_DEF });
+const ZDEF = () => ({ kind: 'pave', form: 'kirpich', color: 'osen', pat: 'perevyazka', th: 60, kayma: '', kerb: true, kerbType: KERB_DEF, color2: '', mix: 'mix' });
 function pack(o) { const c = JSON.parse(JSON.stringify(o)), zd = ZDEF(); c.zones.forEach(z => { for (const k in zd) if (z[k] === zd[k]) delete z[k]; });
   if (TEMPLATES[c.tpl]) { const d = decorOf(c.tpl); DECOR.forEach((k, i) => { if (JSON.stringify(c[k]) === JSON.stringify(d[i])) delete c[k]; }); } return c; }
 function unpack(o) { if (!o || o.v !== 1 || !Array.isArray(o.zones)) return null; o.zones = o.zones.map(z => ({ ...ZDEF(), ...z })); const d = TEMPLATES[o.tpl] ? decorOf(o.tpl) : [[], [], []]; DECOR.forEach((k, i) => { if (!Array.isArray(o[k])) o[k] = d[i]; }); o.plot = o.plot || { w: 24, d: 24 }; return o; }
@@ -96,6 +96,7 @@ function fixZone(z) {
   if (!D.prices[z.form]) z.form = Object.keys(D.prices)[0];
   if (!D.prices[z.form][z.color]) z.color = formColors(z.form)[0];
   const t = ths(z.form, z.color); if (!t.includes(z.th)) z.th = t[0];
+  if (z.color2 && (z.color2 === z.color || !D.prices[z.form][z.color2])) z.color2 = '';
   const pats = formSpec(z.form).patterns; if (!pats.includes(z.pat)) z.pat = pats[0];
 }
 S.zones.forEach(fixZone);
@@ -104,7 +105,14 @@ S.zones.forEach(fixZone);
   if (!f || !D.prices[f] || /p=/.test(location.hash)) return;
   S.zones.filter(z => z.kind === 'pave').forEach(z => { z.form = f; if (c && D.prices[f][c]) z.color = c; fixZone(z); });
 })();
-const zPrice = z => z.kind === 'grid' ? (D.lawn ? D.lawn.price : null) : ((D.prices[z.form] || {})[z.color] || {})[z.th] ?? null;
+const priceOf = (f, c, th) => { const p = (D.prices[f] || {})[c] || {}; return p[th] ?? Object.values(p).find(v => v != null) ?? null; };
+const zShare = z => z.kind === 'pave' && z.color2 ? mixShare(z.form, z.mix || 'mix') : 0;
+function zPrice(z) {
+  if (z.kind === 'grid') return D.lawn ? D.lawn.price : null;
+  const p1 = ((D.prices[z.form] || {})[z.color] || {})[z.th] ?? null, sh = zShare(z); if (!sh) return p1;
+  const p2 = priceOf(z.form, z.color2, z.th); return p1 == null || p2 == null ? null : p1 * (1 - sh) + p2 * sh;
+}
+const zColors = z => (D.colors[z.color] || {}).name + (z.color2 ? ' + ' + (D.colors[z.color2] || {}).name + ' (' + MIX_NAMES[z.mix || 'mix'].toLowerCase() + ')' : '');
 const swatch = pal => { const tot = pal.reduce((s, p) => s + p[1], 0) || 1; let a = 0; return 'conic-gradient(from 20deg,' + pal.map(([h, w]) => { const s = a / tot * 100; a += w; return `${h} ${s.toFixed(0)}% ${(a / tot * 100).toFixed(0)}%`; }).join(',') + ')'; };
 const zoneName = (z, i) => z.kind === 'grid' ? 'Газонная решётка' : ['Площадка', 'Дорожка', 'Отмостка'][(Math.min(z.x2 - z.x1, z.z2 - z.z1) < 1.6) ? 1 : 0] + ' ' + (i + 1);
 
@@ -131,7 +139,7 @@ const hemi = new THREE.HemisphereLight('#dfeaf6', '#6d7652', 1.1); scene.add(hem
 const sun = new THREE.DirectionalLight('#fff0db', 2.7); sun.position.set(18, 26, 22); sun.castShadow = true;
 const SM = (MOBILE || WEAK) ? 1024 : 2048; sun.shadow.mapSize.set(SM, SM); if (SOFT) renderer.shadowMap.enabled = false;
 sun.shadow.bias = -.00025; sun.shadow.normalBias = .025; scene.add(sun, sun.target);
-let dirty = true; const redraw = (shadows = true) => { dirty = true; if (shadows) renderer.shadowMap.needsUpdate = true; };
+let dirty = true, phDirty = false; const redraw = (shadows = true) => { dirty = true; phDirty = true; if (shadows) renderer.shadowMap.needsUpdate = true; };
 
 /* ---------- текстуры ---------- */
 const texLoader = new THREE.TextureLoader(), TEX = {}; let assetsTotal = 0, assetsDone = 0, assetsResolve; const assetsReady = new Promise(r => assetsResolve = r);
@@ -373,14 +381,17 @@ async function genTex(job) {
 }
 const paveAO = MACRO.clone(); paveAO.repeat.set(.32, .32); paveAO.needsUpdate = true;
 function avgColor(pal) { let r = 0, g = 0, b = 0, t = 0; for (const [h, w] of pal) { const n = parseInt(h.slice(1), 16); r += (n >> 16) * w; g += (n >> 8 & 255) * w; b += (n & 255) * w; t += w; } return new THREE.Color(`rgb(${r / t | 0},${g / t | 0},${b / t | 0})`); }
+const avgHex = c => '#' + avgColor((D.colors[c] || {}).pal || [['#999999', 1]]).getHexString();
 function zoneMat(z) {
   if (z.kind === 'grid') return gridMat();
-  const key = z.form + '|' + z.color + '|' + z.pat;
+  const key = z.form + '|' + z.color + '|' + z.pat + (z.color2 ? '|' + z.color2 + '|' + z.mix : '');
   if (ZMAT[key]) return ZMAT[key].mat;
   const pal = (D.colors[z.color] || {}).pal || [['#999999', 1]];
   const mat = keep(new THREE.MeshStandardMaterial({ color: avgColor(pal), roughness: 1, aoMap: paveAO, aoMapIntensity: .9 }));
   ZMAT[key] = { mat, ready: false };
-  genTex({ slug: z.form, pat: z.pat, px: PX, pal, seed: 11 }).then(d => {
+  const pal2 = z.color2 ? (D.colors[z.color2] || {}).pal : null;
+  if (pal2) mat.color.copy(avgColor(pal)).lerp(avgColor(pal2), zShare(z));
+  genTex({ slug: z.form, pat: z.pat, px: PX, pal, pal2, mix: z.mix, seed: 11 }).then(d => {
     const rot = PATTERN_ROT[z.pat] || 0, P = period(z.form);
     const set = (a, srgb) => { const t = dataTex(a, d.W, d.H, srgb); t.repeat.set(1 / P, 1 / P); t.rotation = rot; return t; };
     mat.map = set(d.c, true); mat.normalMap = set(d.n, false); mat.roughnessMap = set(d.r, false); mat.color.set('#ffffff'); mat.needsUpdate = true; ZMAT[key].ready = true; redraw(false);
@@ -609,6 +620,7 @@ function camView(i) {
 function camPlan(instant) { const t = Math.tan(camera.fov * Math.PI / 360), dist = Math.max((S.plot.d / 2 + 1) / t, (S.plot.w / 2 + 1) / (t * camera.aspect)) * 1.04; go(new THREE.Vector3(0, dist, .01), new THREE.Vector3(0, 0, 0), instant); }
 function go(pos, tg, instant) { if (instant) { camera.position.copy(pos); controls.target.copy(tg); redraw(false); return; } tween = { t0: CLOCK, p0: camera.position.clone(), g0: controls.target.clone(), p1: pos, g1: tg }; }
 function setMode(m) {
+  if (PH.on) phClose();
   mode = m; draw = null;
   $$('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m));
   $$('[data-plan-only]').forEach(e => e.hidden = m !== 'plan'); $$('[data-draw]').forEach(b => b.setAttribute('aria-pressed', 'false'));
@@ -752,6 +764,7 @@ function renderPanel() {
   const h = S.house, z = sel && sel.kind === 'zone' ? S.zones.find(q => q.id === sel.id) : null;
   let html = '';
   if (tab === 'plot') {
+    html += `<button type="button" class="to-promo" data-phopen><b>Примерить на фото своего двора</b><span>Загрузите фото, отметьте 4 угла, и плитка ляжет в перспективе</span></button>`;
     html += `<div class="to-sec"><h3>Готовый участок</h3><div class="to-cards">${Object.entries(TEMPLATES).map(([k, t]) => card('data-tpl', k, S.tpl, t.name, t.sub)).join('')}</div><p class="to-note">Выберите похожий двор, а потом меняйте под себя.</p></div>`;
     html += `<div class="to-sec"><h3>Размер участка</h3><div class="to-row"><b>Ширина</b></div><div class="to-range"><input type="range" min="14" max="40" step="1" value="${S.plot.w}" data-plot="w"><output>${S.plot.w} м</output></div>
       <div class="to-row" style="margin-top:8px"><b>Глубина</b></div><div class="to-range"><input type="range" min="14" max="40" step="1" value="${S.plot.d}" data-plot="d"><output>${S.plot.d} м</output></div></div>`;
@@ -782,8 +795,8 @@ function renderPanel() {
   body.innerHTML = html; renderFoot(); renderSwap();
 }
 function zoneRow(q, i) {
-  const a = areas[S.zones.indexOf(q) + 1] || 0, sw = q.kind === 'grid' ? 'repeating-conic-gradient(#9d968c 0 25%,#6e9b48 0 50%) 0 0/10px 10px' : swatch((D.colors[q.color] || {}).pal || []);
-  const sub = q.kind === 'grid' ? 'газонная решётка' : `${(FORMS[q.form] || {}).name || ''} · ${(D.colors[q.color] || {}).name || ''}`, pr = zPrice(q), sum = pr ? Math.round(a * (q.kind === 'grid' ? 1.05 : 1.07) * pr / 100) * 100 : 0;
+  const a = areas[S.zones.indexOf(q) + 1] || 0, sw = q.kind === 'grid' ? 'repeating-conic-gradient(#9d968c 0 25%,#6e9b48 0 50%) 0 0/10px 10px' : (q.color2 ? `linear-gradient(135deg,${avgHex(q.color)} 50%,${avgHex(q.color2)} 50%)` : swatch((D.colors[q.color] || {}).pal || []));
+  const sub = q.kind === 'grid' ? 'газонная решётка' : `${(FORMS[q.form] || {}).name || ''} · ${zColors(q)}`, pr = zPrice(q), sum = pr ? Math.round(a * (q.kind === 'grid' ? 1.05 : 1.07) * pr / 100) * 100 : 0;
   return `<button type="button" class="to-zone" data-zsel="${q.id}" aria-pressed="${sel && sel.id === q.id}"><i style="background:${sw}"></i><span>${esc(zoneName(q, i))}<small>${esc(sub)} · ${num(a)} м²</small></span>${sum ? `<b>${fmt(sum)} ₽</b>` : ''}</button>`;
 }
 function zonePanel(z) {
@@ -797,6 +810,8 @@ function zonePanel(z) {
     h += `<div class="to-sec"><div class="to-row"><b>Цвет</b><span>${esc((D.colors[z.color] || {}).name || '')}${price ? ' · ' + fmt(price) + ' ₽/м²' : ''}</span></div><div class="dots">${cols.map(c => `<button type="button" class="dot-b" data-zcol="${c}" title="${esc(D.colors[c].name)}" aria-label="${esc(D.colors[c].name)}" aria-pressed="${c === z.color}" style="background:${swatch(D.colors[c].pal)}"></button>`).join('')}</div></div>`;
     h += `<div class="to-sec"><b class="to-row">Рисунок укладки</b>${seg('data-zpat', pats.map(p => [p, PATTERN_NAMES[p]]), z.pat)}</div>`;
     if (t.length > 1) h += `<div class="to-sec"><b class="to-row">Толщина</b>${seg('data-zth', t.map(x => [x, x + ' мм']), z.th)}</div>`;
+    h += `<div class="to-sec"><div class="to-row"><b>Второй цвет</b><span>${z.color2 ? esc(D.colors[z.color2].name) + ' · ' + Math.round(zShare(z) * 100) + '%' : 'нет'}</span></div><div class="dots"><button type="button" class="dot-b" data-zcol2="" aria-pressed="${!z.color2}" title="Один цвет" aria-label="Один цвет" style="background:#fff;box-shadow:inset 0 0 0 2px #ddd"></button>${cols.filter(c => c !== z.color).map(c => `<button type="button" class="dot-b" data-zcol2="${c}" aria-pressed="${c === z.color2}" title="${esc(D.colors[c].name)}" aria-label="${esc(D.colors[c].name)}" style="background:${swatch(D.colors[c].pal)}"></button>`).join('')}</div>
+      ${z.color2 ? `<div style="margin-top:10px">${seg('data-zmix', Object.entries(MIX_NAMES), z.mix || 'mix')}</div>` : '<p class="to-note">Добавьте второй цвет: микс, полосы или шахматка.</p>'}</div>`;
     h += `<div class="to-sec"><div class="to-row"><b>Кайма по краю</b><span>${z.kayma ? esc(D.colors[z.kayma].name) : 'нет'}</span></div><div class="dots"><button type="button" class="dot-b" data-zkay="" aria-pressed="${!z.kayma}" title="Без каймы" aria-label="Без каймы" style="background:#fff;box-shadow:inset 0 0 0 2px #ddd"></button>${formColors('kirpich').map(c => `<button type="button" class="dot-b" data-zkay="${c}" aria-pressed="${c === z.kayma}" title="${esc(D.colors[c].name)}" aria-label="${esc(D.colors[c].name)}" style="background:${swatch(D.colors[c].pal)}"></button>`).join('')}</div></div>`;
   }
   h += `<div class="to-sec"><label class="to-check"><input type="checkbox" data-zkerb ${z.kerb ? 'checked' : ''}> Бордюр по краю</label>${z.kerb && D.kerbs.length ? `<select data-zkt style="margin-top:8px">${D.kerbs.map((k, n) => `<option value="${n}" ${n === z.kerbType ? 'selected' : ''}>${esc(k.name)}${k.price ? ' · ' + fmt(k.price) + ' ₽/шт' : ''}</option>`).join('')}</select>` : ''}</div>`;
@@ -808,7 +823,8 @@ function calc() {
   const rows = []; let total = 0;
   S.zones.forEach((z, i) => { const a = areas[i + 1] || 0; if (a <= 0) return; const res = z.kind === 'grid' ? 1.05 : 1.07, m2 = a * res, pr = zPrice(z), sum = pr ? Math.round(m2 * pr / 100) * 100 : 0; total += sum;
     const perPal = z.kind === 'pave' && FORMS[z.form] ? FORMS[z.form].m2 : 0, pal = perPal ? Math.ceil(m2 / perPal) : 0;
-    rows.push({ name: zoneName(z, i), what: z.kind === 'grid' ? 'Газонная решётка' : `«${(FORMS[z.form] || {}).name}» ${(D.colors[z.color] || {}).name}, ${PATTERN_NAMES[z.pat].toLowerCase()}, ${z.th} мм`, m2, pr, sum, a, pal });
+    rows.push({ name: zoneName(z, i), what: z.kind === 'grid' ? 'Газонная решётка' : `«${(FORMS[z.form] || {}).name}» ${zColors(z)}, ${PATTERN_NAMES[z.pat].toLowerCase()}, ${z.th} мм`, m2, pr, sum, a, pal,
+      split: zShare(z) ? `${(D.colors[z.color] || {}).name} ≈ ${num(m2 * (1 - zShare(z)))} м², ${(D.colors[z.color2] || {}).name} ≈ ${num(m2 * zShare(z))} м²` : '' });
     if (z.kerb && kerbLen[z.id] && D.kerbs[z.kerbType]) { const k = D.kerbs[z.kerbType], n = Math.ceil(kerbLen[z.id] / k.len), s = k.price ? n * k.price : 0; total += s; rows.push({ name: 'Бордюр: ' + zoneName(z, i), what: k.name, pcs: n, pr: k.price, sum: s }); } });
   return { rows, total };
 }
@@ -816,7 +832,7 @@ function sumPanel() {
   const { rows, total } = calc();
   if (!rows.length) return '<div class="to-empty">Добавьте площадку, и здесь появится смета.</div>';
   const pals = rows.reduce((s, r) => s + (r.pal || 0), 0);
-  let h = '<table class="to-sum">' + rows.map(r => `<tr><td>${esc(r.name)}<small>${esc(r.what)}${r.m2 ? ` · ${num(r.a)} м², с запасом ${num(r.m2)} м²${r.pal ? `, ≈ ${r.pal} ${plural(r.pal, 'поддон', 'поддона', 'поддонов')}` : ''}` : ` · ${r.pcs} шт`}</small></td><td>${r.sum ? fmt(r.sum) + ' ₽' : 'по запросу'}</td></tr>`).join('') + '</table>';
+  let h = '<table class="to-sum">' + rows.map(r => `<tr><td>${esc(r.name)}<small>${esc(r.what)}${r.m2 ? ` · ${num(r.a)} м², с запасом ${num(r.m2)} м²${r.pal ? `, ≈ ${r.pal} ${plural(r.pal, 'поддон', 'поддона', 'поддонов')}` : ''}${r.split ? '<br>' + esc(r.split) : ''}` : ` · ${r.pcs} шт`}</small></td><td>${r.sum ? fmt(r.sum) + ' ₽' : 'по запросу'}</td></tr>`).join('') + '</table>';
   h += `<div class="to-total"><span>Примерно, без доставки${pals ? `<small>около ${pals} ${plural(pals, 'поддона', 'поддонов', 'поддонов')} плитки</small>` : ''}</span><b>≈ ${fmt(Math.round(total / 500) * 500)} ₽</b></div>`;
   h += `<div class="to-btns"><button type="button" class="btn btn-brand" data-send>Отправить проект менеджеру</button><button type="button" class="btn btn-line" data-share>Поделиться</button><button type="button" class="btn btn-line" data-shot>Сохранить картинку</button><button type="button" class="btn btn-line" data-copy>Скопировать ссылку</button></div>`;
   h += `<p class="to-note">Запас на подрезку: 7% для плитки, 5% для решётки. Цены из каталога, точный расчёт с доставкой пришлёт менеджер.</p><p class="to-note">${esc(D.disclaimer)}</p>`;
@@ -841,9 +857,11 @@ body.addEventListener('click', e => {
   else if (z && d.zform) { z.form = d.zform; fixZone(z); zones = true; }
   else if (z && d.zcol) { z.color = d.zcol; fixZone(z); zones = true; }
   else if (z && d.zpat) { z.pat = d.zpat; zones = true; }
+  else if (z && 'zcol2' in d) { z.color2 = d.zcol2; fixZone(z); zones = true; }
+  else if (z && d.zmix) { z.mix = d.zmix; zones = true; }
   else if (z && d.zth) { z.th = +d.zth; }
   else if (z && 'zkay' in d) { z.kayma = d.zkay; zones = true; }
-  else if (z && 'zall' in d) { S.zones.filter(q => q.kind === 'pave').forEach(q => { q.form = z.form; q.color = z.color; q.pat = z.pat; q.th = z.th; fixZone(q); }); zones = true; hint('Применено ко всем площадкам'); }
+  else if (z && 'zall' in d) { S.zones.filter(q => q.kind === 'pave').forEach(q => { q.form = z.form; q.color = z.color; q.pat = z.pat; q.th = z.th; q.color2 = z.color2; q.mix = z.mix; fixZone(q); }); zones = true; hint('Применено ко всем площадкам'); }
   else if (z && 'zdel' in d) { delZone(z.id); return; }
   else if (z && 'zdup' in d) { const w = z.x2 - z.x1, dd = z.z2 - z.z1, c = { ...z, id: zid++ };
     if (z.x2 + w <= S.plot.w / 2) { c.x1 = z.x2; c.x2 = z.x2 + w; } else if (z.x1 - w >= -S.plot.w / 2) { c.x1 = z.x1 - w; c.x2 = z.x1; } else { c.z1 = Math.min(S.plot.d / 2 - dd, z.z2); c.z2 = c.z1 + dd; }
@@ -855,6 +873,7 @@ body.addEventListener('click', e => {
   else if (d.vdel) { const vars = LS.get('mw3d_vars') || []; vars.splice(+d.vdel, 1); LS.set('mw3d_vars', vars); renderPanel(); return; }
   else if ('reset' in d) { if (!confirm('Начать заново? Текущий проект сбросится (сохранённые варианты останутся).')) return; S = fromTemplate(1); S.zones.forEach(fixZone); zid = Math.max(0, ...S.zones.map(q => q.id)) + 1; sel = null; world = zones = true; look = true; cam3d(); }
   else if ('share' in d) { shareProject(); return; }
+  else if ('phopen' in d) { phOpen(); return; }
   else if ('send' in d) { sendProject(); return; }
   else if ('shot' in d) { saveShot(); return; }
   else if ('copy' in d) { copyLink(); return; }
@@ -907,7 +926,7 @@ $('[data-foot]').addEventListener('click', e => { if (e.target.closest('[data-se
 $$('.to-tools [data-shot]').forEach(b => b.addEventListener('click', saveShot));
 
 /* ---------- картинка, ссылка, заявка ---------- */
-function render3() { const hs = handlesG.visible; handlesG.visible = false; renderer.render(scene, camera); handlesG.visible = hs; redraw(false); return renderer.domElement; }
+function render3() { if (PH.on && PH.img) { phRender(); return phCanvas; } const hs = handlesG.visible; handlesG.visible = false; renderer.render(scene, camera); handlesG.visible = hs; redraw(false); return renderer.domElement; }
 function snapshot(maxW = 1600, list = true) {
   const src = render3(), k = Math.min(1, maxW / src.width), W = Math.round(src.width * k), H = Math.round(src.height * k), u = Math.round(Math.max(44, W * .045));
   const m = document.createElement('canvas').getContext('2d'), fs = Math.max(12, Math.round(u * .26)), ls = Math.round(fs * 1.12); m.font = `500 ${fs}px Onest, Arial`;
@@ -952,7 +971,8 @@ function projectText() {
   const h = S.house, { rows, total } = calc();
   return [`Дом: ${HOUSES[h.type].name}; фасад: ${FACADE_MATS[h.facade.m]} ${nameOf(h.facade.m === 'brick' ? BRICK_COLORS : h.facade.m === 'wood' ? WOOD_COLORS : FACADE_COLORS, h.facade.c)}; крыша: ${ROOF_MATS[h.roof.m]} ${nameOf(RAL, h.roof.c)}`,
     `Забор: ${FENCE_TYPES[S.fence.t]}${S.fence.t !== 'none' ? ' ' + nameOf(FENCE_COLORS, S.fence.c) : ''}; участок ${S.plot.w}×${S.plot.d} м`, '',
-    ...rows.map(r => `${r.name}: ${r.what}${r.m2 ? `, ${r.a.toFixed(1)} м² (с запасом ${r.m2.toFixed(1)} м²)` : `, ${r.pcs} шт`}${r.sum ? ', ≈ ' + fmt(r.sum) + ' ₽' : ''}`),
+    ...rows.map(r => `${r.name}: ${r.what}${r.m2 ? `, ${r.a.toFixed(1)} м² (с запасом ${r.m2.toFixed(1)} м²${r.split ? '; ' + r.split : ''})` : `, ${r.pcs} шт`}${r.sum ? ', ≈ ' + fmt(r.sum) + ' ₽' : ''}`),
+    ...(PH.on && PH.img ? ['', `Картинка: примерка на фото клиента (${PH.zoneLabel}), размер на фото ${num(PH.w)}×${num(PH.d)} м`] : []),
     '', `Итого примерно: ${fmt(total)} ₽ без доставки`].join('\n');
 }
 function sendProject() {
@@ -962,6 +982,121 @@ function sendProject() {
   window.mwLead({ type: 'project3d', title: 'Отправить проект менеджеру', sub: 'Менеджер посмотрит проект, уточнит размеры и пришлёт точный расчёт с доставкой.',
     product: `Проект из 3D-примерочной (${S.zones.length} ${S.zones.length === 1 ? 'площадка' : S.zones.length < 5 ? 'площадки' : 'площадок'})`, area: area.toFixed(1), total: Math.round(total / 500) * 500, project: projectText(), link: projectLink(), shot });
 }
+
+
+/* ---------- примерка на фото своего двора ---------- */
+const PH = { on: false, img: null, tex: null, pts: [[.18, .9], [.82, .9], [.7, .52], [.3, .52]], w: 3, d: 4, gain: 1, mean: .18, small: null, zoneLabel: '', box: null };
+const phUI = $('[data-photo-ui]'), phCanvas = $('[data-pc]'), phPoly = $('[data-ph-poly]'), phH = $$('[data-ph]');
+let phR = null, phMat = null, phScene, phCam, FLATN;
+const PH_FS = `uniform sampler2D photo, pave, paveN; uniform float hasPave, rot, mean, gain; uniform vec3 base; uniform mat3 Hi; uniform vec2 size, rep; varying vec2 vUv;
+void main() {
+  vec3 col = texture2D(photo, vUv).rgb;
+  vec3 q = Hi * vec3(vUv.x, 1. - vUv.y, 1.); vec2 st = q.xy / q.z;
+  vec2 fw = fwidth(st); float e = min(min(st.x, 1. - st.x), min(st.y, 1. - st.y)), a = clamp(e / max(max(fw.x, fw.y), 1e-6) + .5, 0., 1.);
+  if (a > 0.) {
+    vec2 m = vec2(st.x * size.x, st.y * size.y); float c = cos(rot), s = sin(rot); vec2 t = vec2(c * m.x - s * m.y, s * m.x + c * m.y) * rep;
+    vec3 alb = mix(base, texture2D(pave, t).rgb, hasPave), n = normalize(texture2D(paveN, t).xyz * 2. - 1.);
+    float rel = clamp(.72 + .45 * dot(n, normalize(vec3(-.35, .45, .82))), .5, 1.15);
+    float lum = dot(texture2D(photo, vUv, 4.5).rgb, vec3(.2126, .7152, .0722));
+    float sh = mix(1., clamp(lum / max(mean, 1e-4), .25, 1.7), .8), g = clamp(mean / .2, .4, 1.5) * gain;
+    col = mix(col, alb * sh * g * rel, a);
+  }
+  gl_FragColor = vec4(col, 1.);
+  #include <colorspace_fragment>
+}`;
+function phInit() {
+  if (phR) return true;
+  try { phR = new THREE.WebGLRenderer({ canvas: phCanvas, antialias: false }); } catch (e) { return false; }
+  phR.outputColorSpace = THREE.SRGBColorSpace;
+  FLATN = new THREE.DataTexture(new Uint8Array([128, 128, 255, 255]), 1, 1); FLATN.needsUpdate = true;
+  phMat = new THREE.ShaderMaterial({ uniforms: { photo: { value: null }, pave: { value: FLATN }, paveN: { value: FLATN }, hasPave: { value: 0 }, rot: { value: 0 }, mean: { value: .18 }, gain: { value: 1 }, base: { value: new THREE.Color() }, Hi: { value: new THREE.Matrix3() }, size: { value: new THREE.Vector2(3, 4) }, rep: { value: new THREE.Vector2(1, 1) } },
+    vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }', fragmentShader: PH_FS, depthTest: false });
+  phScene = new THREE.Scene(); phCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); phScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), phMat));
+  return true;
+}
+/* единичный квадрат (u вдоль ближнего края, v вглубь) → четырёхугольник на фото; обратная матрица идёт в шейдер */
+function homography(p) {
+  const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = p, dx1 = x1 - x2, dx2 = x3 - x2, dy1 = y1 - y2, dy2 = y3 - y2, sx = x0 - x1 + x2 - x3, sy = y0 - y1 + y2 - y3;
+  let g = 0, h = 0; const den = dx1 * dy2 - dx2 * dy1; if (Math.abs(den) > 1e-12) { g = (sx * dy2 - dx2 * sy) / den; h = (dx1 * sy - sx * dy1) / den; }
+  return new THREE.Matrix3().set(x1 - x0 + g * x1, x3 - x0 + h * x3, x0, y1 - y0 + g * y1, y3 - y0 + h * y3, y0, g, h, 1);
+}
+const convex = p => { let sg = 0; for (let i = 0; i < 4; i++) { const a = p[i], b = p[(i + 1) % 4], c = p[(i + 2) % 4], cr = (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]); if (Math.abs(cr) < 1e-6) return false; if (sg && Math.sign(cr) !== sg) return false; sg = Math.sign(cr); } return true; };
+function inQuad(x, y, p) { let ins = false; for (let i = 0, j = 3; i < 4; j = i++) { const [xi, yi] = p[i], [xj, yj] = p[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) ins = !ins; } return ins; }
+function phMean() {   // средняя яркость земли под площадкой (линейная): по ней плитка подстраивается под освещение снимка
+  const sm = PH.small; if (!sm) return; let s = 0, n = 0; const lin = v => { v /= 255; return v <= .04045 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
+  for (let y = 0; y < sm.h; y++) for (let x = 0; x < sm.w; x++) if (inQuad((x + .5) / sm.w, (y + .5) / sm.h, PH.pts)) { const i = (y * sm.w + x) * 4; s += .2126 * lin(sm.d[i]) + .7152 * lin(sm.d[i + 1]) + .0722 * lin(sm.d[i + 2]); n++; }
+  PH.mean = n ? s / n : .18;
+}
+function phZone() { const z = sel && sel.kind === 'zone' && S.zones.find(q => q.id === sel.id); return z || S.zones.find(q => q.kind === 'pave') || S.zones[0] || null; }
+function phRender() {
+  phDirty = false; if (!PH.img || !phR || !PH.box) return;
+  const z = phZone(), u = phMat.uniforms;
+  if (z) { const m = zoneMat(z); u.hasPave.value = m.map ? 1 : 0; u.pave.value = m.map || FLATN; u.paveN.value = m.normalMap || FLATN; u.base.value.copy(m.color);
+    if (m.map) u.rep.value.copy(m.map.repeat); else u.rep.value.set(1, 1); u.rot.value = m.map ? m.map.rotation : 0;
+    PH.zoneLabel = z.kind === 'grid' ? 'газонная решётка' : `«${(FORMS[z.form] || {}).name}» ${zColors(z)}, ${PATTERN_NAMES[z.pat].toLowerCase()}`; }
+  u.photo.value = PH.tex; u.mean.value = PH.mean; u.gain.value = PH.gain; u.size.value.set(PH.w, PH.d);
+  u.Hi.value.copy(homography(PH.pts)).invert();
+  phR.render(phScene, phCam);
+}
+function phLayout() {   // фото вписывается между панелью инструментов и стрелками цвета
+  if (!PH.on || !PH.img || !phR) return;
+  const r = phUI.getBoundingClientRect(); if (!r.width || !r.height) return;
+  const tools = $('.to-tools'), bar = $('[data-ph-bar]'), tb = tools.offsetTop + tools.offsetHeight + 8; bar.style.top = tb + 'px';
+  const top = bar.hidden ? tb : tb + bar.offsetHeight + 8, bot = MOBILE ? 88 : 100, aw = r.width - 16, ah = Math.max(80, r.height - top - bot);
+  const k = Math.min(aw / PH.img.width, ah / PH.img.height), w = Math.round(PH.img.width * k), h = Math.round(PH.img.height * k), x = Math.round((r.width - w) / 2), y = Math.round(top + (ah - h) / 2);
+  Object.assign(phCanvas.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+  const pr = Math.min(devicePixelRatio || 1, 2, 2400 / Math.max(w, h)); phR.setPixelRatio(pr); phR.setSize(w, h, false);
+  PH.box = { x, y, w, h }; phHandles(); phDirty = true;
+}
+function phHandles() {
+  const b = PH.box; if (!b) return;
+  PH.pts.forEach((p, i) => { phH[i].style.left = (b.x + p[0] * b.w) + 'px'; phH[i].style.top = (b.y + p[1] * b.h) + 'px'; });
+  phPoly.setAttribute('points', PH.pts.map(p => (b.x + p[0] * b.w) + ',' + (b.y + p[1] * b.h)).join(' '));
+}
+function phShow(has) { $('[data-ph-empty]').hidden = has; $('[data-ph-bar]').hidden = !has; phCanvas.hidden = !has; $('[data-ph-svg]').style.display = has ? '' : 'none'; phH.forEach(h => h.hidden = !has); }
+function phOpen() {
+  if (!phInit()) { hint('Браузер не поддерживает эту функцию', 3000); return; }
+  PH.on = true; phUI.hidden = false; view.classList.add('ph'); $('[data-tryon]').classList.add('to-ph'); $('[data-photo]').setAttribute('aria-pressed', 'true'); $$('[data-3d-only],[data-plan-only]').forEach(e => e.hidden = true);
+  phShow(!!PH.img); phLayout(); renderSwap();
+  if (PH.img) hint('Меняйте цвет стрелками внизу или во вкладке «Плитка»', 3500); else hint('');
+}
+function phClose() { PH.on = false; phUI.hidden = true; view.classList.remove('ph'); $('[data-tryon]').classList.remove('to-ph'); $('[data-photo]').setAttribute('aria-pressed', 'false'); $$('[data-3d-only]').forEach(e => e.hidden = mode !== '3d'); $$('[data-plan-only]').forEach(e => e.hidden = mode !== 'plan'); redraw(false); }
+function phLoad(file) {
+  if (!file || !/^image\//.test(file.type)) { hint('Нужна фотография: JPG, PNG или HEIC', 3000); return; }
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = () => {
+    const k = Math.min(1, 2048 / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+    const sw = 96, sh = Math.max(1, Math.round(96 * c.height / c.width)), sc = document.createElement('canvas'); sc.width = sw; sc.height = sh; const sx = sc.getContext('2d'); sx.drawImage(c, 0, 0, sw, sh);
+    PH.small = { w: sw, h: sh, d: sx.getImageData(0, 0, sw, sh).data };
+    if (PH.tex) PH.tex.dispose(); PH.tex = new THREE.CanvasTexture(c); PH.tex.colorSpace = THREE.SRGBColorSpace; PH.tex.anisotropy = 4; PH.img = c;
+    PH.pts = c.height > c.width ? [[.12, .9], [.88, .9], [.72, .58], [.28, .58]] : [[.2, .92], [.8, .92], [.68, .55], [.32, .55]];
+    phMean(); phShow(true); phLayout();
+    hint(MOBILE ? 'Потяните углы к краям площадки и укажите её размеры' : 'Потяните 4 угла к краям места под плитку и укажите его размеры, чтобы камни были в масштабе', 6000);
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); hint('Не удалось открыть фото. Попробуйте JPG или PNG', 3500); };
+  img.src = url;
+}
+$('[data-photo]').addEventListener('click', () => PH.on ? phClose() : phOpen());
+$$('[data-ph-file]').forEach(i => i.addEventListener('change', () => { phLoad(i.files[0]); i.value = ''; }));
+$('[data-ph-w]').addEventListener('input', e => { PH.w = Math.max(.5, parseFloat(e.target.value) || 3); phDirty = true; });
+$('[data-ph-d]').addEventListener('input', e => { PH.d = Math.max(.5, parseFloat(e.target.value) || 4); phDirty = true; });
+$('[data-ph-g]').addEventListener('input', e => { PH.gain = +e.target.value; phDirty = true; });
+new ResizeObserver(() => phLayout()).observe(phUI);
+/* перетаскивание углов и всей площадки целиком */
+let phDrag = null;
+const phPt = e => { const r = phCanvas.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; };
+phH.forEach((h, i) => h.addEventListener('pointerdown', e => { e.preventDefault(); h.setPointerCapture(e.pointerId); phDrag = { i }; }));
+phCanvas.addEventListener('pointerdown', e => { const p = phPt(e); if (!inQuad(p[0], p[1], PH.pts)) return; e.preventDefault(); phCanvas.setPointerCapture(e.pointerId); phDrag = { all: true, p0: p, pts0: PH.pts.map(q => q.slice()) }; });
+phUI.addEventListener('pointermove', e => {
+  if (!phDrag) return; const p = phPt(e), cl = v => Math.max(0, Math.min(1, v));
+  let next;
+  if (phDrag.all) { let dx = p[0] - phDrag.p0[0], dy = p[1] - phDrag.p0[1]; const xs = phDrag.pts0.map(q => q[0]), ys = phDrag.pts0.map(q => q[1]);
+    dx = Math.max(-Math.min(...xs), Math.min(1 - Math.max(...xs), dx)); dy = Math.max(-Math.min(...ys), Math.min(1 - Math.max(...ys), dy)); next = phDrag.pts0.map(q => [q[0] + dx, q[1] + dy]); }
+  else { next = PH.pts.map(q => q.slice()); next[phDrag.i] = [cl(p[0]), cl(p[1])]; }
+  if (!convex(next)) return; PH.pts = next; phHandles(); phDirty = true;
+});
+addEventListener('pointerup', () => { if (phDrag) { phDrag = null; phMean(); phDirty = true; } });
 
 /* ---------- цикл отрисовки ---------- */
 let started = false, PRt = { last: 0, sum: 0, n: 0, good: 0, ceil: 9 }, fi = 0, half = false; const VS = [];
@@ -976,6 +1111,7 @@ function adapt(t) {
 renderer.setAnimationLoop(t => {
   const dRaw = lastT ? t - lastT : 0; if (dRaw > 0 && dRaw < 40) { VS.push(dRaw); if (VS.length > 90) VS.shift(); } if (VS.length >= 30 && fi % 30 === 0) half = [...VS].sort((a, b) => a - b)[Math.floor(VS.length * .2)] < 9.5; fi++;
   if (!started) { lastT = t; return; }
+  if (PH.on) { if (phDirty) phRender(); return; }
   if (half && (fi & 1)) return;
   CLOCK += lastT ? Math.min(50, t - lastT) : 0; lastT = t;
   if (tween) { const k = Math.min(1, Math.max(0, (CLOCK - tween.t0) / 850)), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; camera.position.lerpVectors(tween.p0, tween.p1, e); controls.target.lerpVectors(tween.g0, tween.g1, e); if (k >= 1) { tween = null; updateHandles(); } dirty = true; }
