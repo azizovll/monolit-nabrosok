@@ -617,7 +617,7 @@ function camView(i) {
     return go(new THREE.Vector3(gx, 1.65, d / 2 - .4), new THREE.Vector3(h.x + o.door * .5, 1.2, h.z + o.d / 2)); }
   go(new THREE.Vector3(-w * .48, 3.4, d * .1), new THREE.Vector3(h.x, .8, h.z + o.d / 2 + 2));
 }
-function camPlan(instant) { const t = Math.tan(camera.fov * Math.PI / 360), dist = Math.max((S.plot.d / 2 + 1) / t, (S.plot.w / 2 + 1) / (t * camera.aspect)) * 1.04; go(new THREE.Vector3(0, dist, .01), new THREE.Vector3(0, 0, 0), instant); }
+function camPlan(instant) { const t = Math.tan(camera.fov * Math.PI / 360), dist = Math.max((S.plot.d / 2 + 1) / t, (S.plot.w / 2 + 1) / (t * camera.aspect)) * (view.clientHeight < 420 ? 1.4 : 1.04); /* на телефоне сверху кнопки, снизу стрелки */ go(new THREE.Vector3(0, dist, .01), new THREE.Vector3(0, 0, 0), instant); }
 function go(pos, tg, instant) { if (instant) { camera.position.copy(pos); controls.target.copy(tg); redraw(false); return; } tween = { t0: CLOCK, p0: camera.position.clone(), g0: controls.target.clone(), p1: pos, g1: tg }; }
 function setMode(m) {
   if (PH.on) phClose();
@@ -901,6 +901,12 @@ body.addEventListener('change', e => {
 $$('[data-mode]').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
 $$('[data-draw]').forEach(b => b.addEventListener('click', () => { draw = draw === b.dataset.draw ? null : b.dataset.draw; $$('[data-draw]').forEach(x => x.setAttribute('aria-pressed', x.dataset.draw === draw)); hint(draw ? 'Проведите пальцем или мышью по участку, чтобы нарисовать прямоугольник' : ''); }));
 $('[data-undo]').addEventListener('click', undo); $('[data-redo]').addEventListener('click', redo);
+/* телефон: второстепенные кнопки в меню «⋯» */
+const moreBtn = $('[data-more]'), moreMenu = $('[data-more-menu]');
+const moreSet = on => { moreMenu.classList.toggle('open', on); moreBtn.setAttribute('aria-expanded', on); };
+moreBtn.addEventListener('click', e => { e.stopPropagation(); moreSet(!moreMenu.classList.contains('open')); });
+moreMenu.addEventListener('click', e => { if (e.target.closest('button') && getComputedStyle(moreBtn).display !== 'none') setTimeout(() => moreSet(false), 0); });
+document.addEventListener('pointerdown', e => { if (!e.target.closest('[data-more-menu],[data-more]')) moreSet(false); });
 $('[data-view]').addEventListener('click', () => camView(view3d + 1));
 $('[data-light]').addEventListener('click', () => { const k = Object.keys(LIGHTS); setLight(k[(k.indexOf(light) + 1) % k.length]); });
 view.addEventListener('pointerdown', () => { if (CLOCK > 1500) $('[data-hint]').hidden = true; });
@@ -1157,7 +1163,7 @@ function phLoad(file) {
     const mx = PH.mask.getContext('2d'); mx.fillStyle = '#fff'; mx.fillRect(0, 0, mw, mh); if (PH.maskTex) PH.maskTex.dispose(); PH.maskTex = new THREE.CanvasTexture(PH.mask);
     PH.quads = [newQuad(0, c.height > c.width)]; PH.act = 0; PH.brush = null;
     phShow(true); phBar(); phLayout();
-    hint(MOBILE ? 'Потяните углы к краям площадки, можно и за край фото. Двумя пальцами фото увеличивается' : 'Потяните 4 угла к краям места под плитку, можно и за край фото. Колёсико мыши увеличивает фото', 6500);
+    hint(MOBILE ? 'Тяните углы к краям площадки, можно за край фото' : 'Потяните 4 угла к краям места под плитку, можно и за край фото. Колёсико мыши увеличивает фото', 6500);
   };
   img.onerror = () => { URL.revokeObjectURL(url); hint('Не удалось открыть фото. Попробуйте JPG или PNG', 3500); };
   img.src = url;

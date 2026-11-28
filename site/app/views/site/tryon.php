@@ -8,15 +8,18 @@
         <button type="button" class="tbtn" data-draw="grid" aria-pressed="false">+ <span class="to-long">Газонная решётка</span><span class="to-short">Решётка</span></button>
       </div>
       <div class="to-r">
-        <button type="button" class="tbtn ico" data-undo title="Отменить (Ctrl+Z)" aria-label="Отменить">↶</button>
-        <button type="button" class="tbtn ico" data-redo title="Повторить (Ctrl+Y)" aria-label="Повторить">↷</button>
-        <button type="button" class="tbtn" data-photo aria-pressed="false" title="Примерить плитку на фото своего двора"><span class="to-long">На своём фото</span><span class="to-short">Своё фото</span></button>
-        <button type="button" class="tbtn" data-clean title="Скрыть интерфейс и посмотреть результат"><span class="to-long">Просмотр</span><span class="to-short">Смотреть</span></button>
-        <button type="button" class="tbtn" data-shot title="Сохранить картинку"><span class="to-long">Картинка</span><span class="to-short">Скачать</span></button>
-      </div>
-      <div class="to-v" data-3d-only>
-        <button type="button" class="tbtn" data-view title="Сменить вид">Общий вид</button>
-        <button type="button" class="tbtn" data-light title="Освещение">Солнце</button>
+        <button type="button" class="tbtn to-dots" data-more aria-expanded="false" aria-label="Ещё действия">⋯</button>
+        <div class="to-more" data-more-menu>
+          <button type="button" class="tbtn ico" data-undo title="Отменить (Ctrl+Z)" aria-label="Отменить"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span class="to-mt">Отменить</span></button>
+          <button type="button" class="tbtn ico" data-redo title="Повторить (Ctrl+Y)" aria-label="Повторить"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg><span class="to-mt">Повторить</span></button>
+          <button type="button" class="tbtn" data-photo aria-pressed="false" title="Примерить плитку на фото своего двора">На своём фото</button>
+          <button type="button" class="tbtn" data-clean title="Скрыть интерфейс и посмотреть результат">Просмотр</button>
+          <button type="button" class="tbtn" data-shot title="Сохранить картинку">Картинка</button>
+          <span class="to-v" data-3d-only>
+            <button type="button" class="tbtn" data-view title="Сменить вид">Общий вид</button>
+            <button type="button" class="tbtn" data-light title="Освещение">Солнце</button>
+          </span>
+        </div>
       </div>
     </div>
     <div class="to-photo" data-photo-ui hidden>
@@ -69,7 +72,7 @@
       <button type="button" data-sw="1" aria-label="Следующий цвет">›</button>
     </div>
     <div class="to-loader" data-loader><div><i></i>Строим участок… <span data-lp></span></div></div>
-    <p class="to-disc"><?= e(setting('disclaimer')) ?></p>
+    <p class="to-disc"><span class="to-long"><?= e(setting('disclaimer')) ?></span><span class="to-short"><?= e(setting('disclaimer_short') ?: setting('disclaimer')) ?></span></p>
   </div>
 
   <aside class="to-panel">
