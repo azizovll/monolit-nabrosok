@@ -13,6 +13,13 @@ ksort($diams);
 
 <section class="sec pt0">
   <div class="wrap">
+    <?php if ($c['slug'] === 'kolca'): ?>
+      <div class="pick-hint">
+        <div><b>Колодец для воды</b><span>кольца КС-10 или КС-15, внизу плита днища, сверху плита перекрытия и люк</span></div>
+        <div><b>Септик</b><span>кольца КС-15 или КС-20, нижнее с днищем (КСД), плита и люк</span></div>
+        <div><b>Дренаж</b><span>дренажные кольца с отверстиями, у них в названии буква «Д»</span></div>
+      </div>
+    <?php endif; ?>
     <?php if (count($diams) > 1): ?>
       <div class="filter" data-filter><span>Диаметр:</span><button type="button" aria-pressed="true" data-d="">все</button><?php foreach (array_keys($diams) as $d): ?><button type="button" aria-pressed="false" data-d="<?= $d ?>"><?= $d ?> см</button><?php endforeach; ?></div>
     <?php endif; ?>

@@ -7,6 +7,6 @@
     <h2>Чтобы расчёт был точнее, подготовьте</h2>
     <ul class="ticks"><li>площадь или размеры участка, лучше с планом;</li><li>адрес доставки: от него зависит цена перевозки;</li><li>удобный день для доставки.</li></ul>
     <?= render('site/_disc') ?>
-    <div class="cta-row"><a class="btn btn-line" href="<?= e(url('3d/')) ?>">Пока ждёте: примерьте плитку в 3D</a><a class="btn btn-line" href="<?= e(url('/')) ?>">На главную</a></div>
+    <div class="cta-row"><a class="btn btn-line" href="<?= e(url('3d/')) ?>">Пока ждёте: примерьте плитку в 3D или на фото двора</a><a class="btn btn-line" href="<?= e(url('/')) ?>">На главную</a></div>
   </div>
 </section>

@@ -16,6 +16,11 @@ h2{font-size:clamp(24px,3.2vw,40px);font-weight:800}
 p{margin:0 0 12px}
 .wrap{max-width:1200px;margin:0 auto;padding:0 20px}
 .sec{padding:72px 0}.pt0{padding-top:0}.page-top{padding-top:28px}
+/* соседние секции на одном фоне: без двойного отступа */
+.sec+.sec:not(.calc-sec):not(.yard):not(.pt0){padding-top:16px}
+:is(.calc-sec,.yard)+.sec:not(.calc-sec):not(.yard):not(.pt0){padding-top:72px}
+.page-top:has(+.pt0){padding-bottom:28px}
+.sec>.wrap>h2:first-child{margin-bottom:24px}
 .lead{font-size:18px;color:var(--soft);max-width:680px;margin:12px 0 0}
 .eyebrow{display:inline-block;font:700 12.5px/1 var(--f);letter-spacing:.12em;text-transform:uppercase;color:var(--brand);margin-bottom:12px}
 .muted{color:var(--mute)}.small{font-size:14px}
@@ -131,12 +136,16 @@ p{margin:0 0 12px}
 @media(max-width:600px){.card-p .body{padding:12px}.card-p h3{font-size:16px}.price{font-size:18px}.go{display:none}}
 .strip-link{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:18px;padding:16px 20px;border-radius:14px;background:#eef6e8;border:1px solid #cfe3c2;text-decoration:none;color:#2f5a1a}
 
-.try3d{display:flex;align-items:center;gap:24px;background:var(--dark);color:#fff;border-radius:20px;padding:22px 26px 22px 22px;text-decoration:none;transition:transform .2s}
-.try3d:hover{transform:translateY(-2px)}
-.try3d-pic{flex:none;width:150px;height:96px;border-radius:12px;background:url(img/foto-4.webp) center/cover;transform:perspective(300px) rotateX(34deg);box-shadow:0 14px 24px rgba(0,0,0,.4)}
-.try3d-t{flex:1;min-width:0}.try3d-t .eyebrow{color:#ff9a9a;margin-bottom:6px}
-.try3d b{display:block;font-size:22px;line-height:1.2}.try3d p{margin:6px 0 0;color:#cbc1bc}
-@media(max-width:800px){.try3d{flex-direction:column;align-items:stretch;padding:18px}.try3d-pic{width:100%;height:110px}.try3d .btn{width:100%}}
+.try3d{display:grid;grid-template-columns:1.05fr 1fr;align-items:center;gap:36px;background:var(--dark);color:#fff;border-radius:24px;padding:22px 36px 22px 22px}
+.try3d-pic{display:block;border-radius:16px;overflow:hidden;aspect-ratio:16/10;box-shadow:0 16px 36px rgba(0,0,0,.35)}
+.try3d-pic img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s}
+.try3d-pic:hover img{transform:scale(1.03)}
+.try3d-t .eyebrow{color:#ff9a9a;margin-bottom:8px;display:block}
+.try3d-t>b{display:block;font-size:clamp(22px,2.4vw,30px);line-height:1.15;letter-spacing:-.01em}
+.try3d .ticks{color:#e3dbd7;margin:16px 0 20px}.try3d .ticks b{color:#fff}
+.try3d .cta-row{margin:0}
+.btn-ghost-w{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.5)}.btn-ghost-w:hover{border-color:#fff}
+@media(max-width:860px){.try3d{grid-template-columns:1fr;gap:18px;padding:16px 16px 20px}.try3d .cta-row .btn{flex:1}}
 
 /* ЖБИ */
 .cats{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
@@ -347,6 +356,15 @@ details[open] summary::after{transform:rotate(45deg)}
 .final .contacts{display:grid;gap:10px;position:relative}
 .final .contacts a{display:block;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);padding:15px 18px;border-radius:14px;text-decoration:none;transition:background .2s}
 .final .contacts a:hover{background:rgba(255,255,255,.18)}
+.thanks h2{font-size:26px;margin:30px 0 12px}
+.faq-ask{margin-top:18px}
+.pick-hint{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 22px}
+.pick-hint>div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.4}
+.pick-hint b{display:block;font-size:15px;margin-bottom:3px}.pick-hint span{color:var(--soft)}
+@media(max-width:760px){.pick-hint{grid-template-columns:1fr}}
+/* карточка брусчатки на телефоне: название и цена над фото */
+@media(max-width:900px){.pf-in{display:flex;flex-direction:column;gap:0}.pf-info{display:contents}
+  .pf-info>h1{order:-3;margin-bottom:4px}.pf-info>.pf-price{order:-2;margin:4px 0 14px}.pf-gal{order:-1;margin-bottom:18px}.pf-info>.lead{margin:0 0 16px}}
 .final .contacts b{display:block;font-size:17px}.final .contacts small{color:#f3d6d6}
 @media(max-width:900px){.final{grid-template-columns:1fr;padding:30px 20px;border-radius:22px}}
 

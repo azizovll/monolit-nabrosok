@@ -1300,5 +1300,6 @@ if (location.search.includes('debug')) window.__to = { THREE, scene, camera, con
 resize(); rebuildAll(); cam3d(true); renderPanel(); commit();
 Promise.race([Promise.all([assetsReady, new Promise(r => setTimeout(r, 300))]), new Promise(r => setTimeout(r, 12000))]).then(() => renderer.compileAsync ? renderer.compileAsync(scene, camera).catch(() => {}) : null).then(() => {
   started = true; redraw(); $('[data-loader]').classList.add('off');
+  if (new URLSearchParams(location.search).get('photo')) { phOpen(); return; }
   hint(MOBILE ? 'Крутите участок пальцем. «План»: рисовать и двигать площадки' : 'Крутите участок мышью. «План»: рисовать и двигать площадки, менять размеры', 6000);
 });

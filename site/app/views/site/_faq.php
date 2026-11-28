@@ -4,7 +4,8 @@
     <div>
       <span class="eyebrow">Вопросы</span>
       <h2><?= e($title ?? 'Частые вопросы') ?></h2>
-      <p class="lead">Не нашли ответ? Позвоните, подскажем за пару минут: <a href="tel:<?= e(setting('phone_tel')) ?>" data-goal="phone"><?= e(setting('phone')) ?></a></p>
+      <p class="lead faq-lead">Не нашли ответ? Позвоните, подскажем за пару минут: <a href="tel:<?= e(setting('phone_tel')) ?>" data-goal="phone"><?= e(setting('phone')) ?></a></p>
+      <button class="btn btn-line faq-ask" type="button" data-lead="callback" data-title="Задать вопрос" data-sub="Перезвоним и ответим, обычно за 15 минут в рабочее время.">Задать вопрос</button>
     </div>
     <div>
       <?php foreach ($faq as $i => $f): ?>

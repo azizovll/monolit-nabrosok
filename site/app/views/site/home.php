@@ -53,19 +53,20 @@
       <?php endforeach; ?>
     </div>
     <?php if ($lawn): ?>
-      <a class="strip-link" href="<?= e(url('gazonnaya-reshetka/')) ?>"><b>Новинка: газонная решётка</b><span>Парковка на газоне без луж и колеи<?= $lawn['min_price'] ? ', ' . number_format($lawn['min_price'], 0, ',', ' ') . ' ₽/' . e((string)val('SELECT price_unit FROM products WHERE category_id = ? AND visible = 1 ORDER BY sort LIMIT 1', [$lawn['id']])) : '' ?> →</span></a>
+      <a class="strip-link" href="<?= e(url('gazonnaya-reshetka/')) ?>"><b>Новинка: газонная решётка</b><span>Парковка на газоне без луж и колеи<?= $lawn['min_price'] ? ', ' . number_format($lawn['min_price'], 0, ',', ' ') . ' ₽/' . e((string)val('SELECT price_unit FROM products WHERE category_id = ? AND visible = 1 ORDER BY sort LIMIT 1', [$lawn['id']])) : '' ?> →</span></a>
     <?php endif; ?>
   </div>
 </section>
 
 <section class="sec try3d-sec">
   <div class="wrap">
-    <a class="try3d" href="<?= e(url('3d/')) ?>">
-      <div class="try3d-pic" aria-hidden="true"></div>
-      <div class="try3d-t"><span class="eyebrow">3D-примерочная</span><b>Посмотрите плитку у своего дома до покупки</b>
-        <p>Выберите дом, цвет фасада и крыши, нарисуйте дорожки и площадку, сравните формы и цвета плитки и сразу получите смету.</p></div>
-      <span class="btn btn-white">Открыть примерочную</span>
-    </a>
+    <div class="try3d">
+      <a class="try3d-pic" href="<?= e(url('3d/')) ?>" aria-label="Открыть 3D-примерочную"><img src="<?= e(asset('assets/img/tryon-promo.webp')) ?>" alt="Двор с плиткой в 3D-примерочной" width="960" height="600" loading="lazy"></a>
+      <div class="try3d-t"><span class="eyebrow">Примерочная</span><b>Посмотрите плитку у своего дома до покупки</b>
+        <ul class="ticks"><li><b>В 3D:</b> свой дом, крыша, забор, нарисуйте дорожки и площадки</li><li><b>На фото своего двора:</b> загрузите снимок, и плитка ляжет в перспективе</li><li>Смета сразу, проект можно отправить менеджеру</li></ul>
+        <div class="cta-row"><a class="btn btn-white" href="<?= e(url('3d/')) ?>" data-goal="tryon_open">Открыть 3D</a><a class="btn btn-ghost-w" href="<?= e(url('3d/?photo=1')) ?>" data-goal="tryon_photo">Примерить на фото</a></div>
+      </div>
+    </div>
   </div>
 </section>
 

@@ -224,7 +224,7 @@
       if (!es[0].isIntersecting) return; mo.disconnect();
       var lat = map.getAttribute('data-lat'), lng = map.getAttribute('data-lng'), f = document.createElement('iframe');
       f.src = 'https://yandex.ru/map-widget/v1/?ll=' + lng + '%2C' + lat + '&z=16&pt=' + lng + '%2C' + lat + '%2Cpm2rdm';
-      f.title = 'Карта: площадка Монолит-Вест'; f.loading = 'lazy'; f.allowFullscreen = true;
+      f.title = 'Карта: площадка Монолит-Вест'; f.allowFullscreen = true; f.width = '100%'; f.height = '100%';
       map.innerHTML = ''; map.appendChild(f);
     }, { rootMargin: '200px' });
     mo.observe(map);
