@@ -20,9 +20,11 @@
     </div>
     <div class="to-photo" data-photo-ui hidden>
       <canvas data-pc></canvas>
-      <svg class="to-ph-svg" data-ph-svg><polygon data-ph-poly></polygon></svg>
+      <svg class="to-ph-svg" data-ph-svg></svg>
       <div class="to-ph-h" data-ph="0" title="Ближний левый угол"></div><div class="to-ph-h" data-ph="1" title="Ближний правый угол"></div>
       <div class="to-ph-h" data-ph="2" title="Дальний правый угол"></div><div class="to-ph-h" data-ph="3" title="Дальний левый угол"></div>
+      <div class="to-ph-cur" data-ph-cur hidden></div>
+      <canvas class="to-ph-loupe" data-ph-loupe width="240" height="240" hidden></canvas>
       <div class="to-ph-empty" data-ph-empty>
         <div>
           <b>Примерьте плитку на фото своего двора</b>
@@ -32,10 +34,19 @@
         </div>
       </div>
       <div class="to-ph-bar" data-ph-bar hidden>
-        <label>Ширина<input type="number" min="0.5" max="50" step="0.1" value="3" data-ph-w>м</label>
-        <label>Глубина<input type="number" min="0.5" max="50" step="0.1" value="4" data-ph-d>м</label>
-        <label class="to-ph-light">Яркость<input type="range" min="0.5" max="1.6" step="0.05" value="1" data-ph-g></label>
-        <label class="tbtn">Другое фото<input type="file" accept="image/*" data-ph-file hidden></label>
+        <div class="to-ph-row">
+          <span class="to-ph-q" data-ph-quads></span>
+          <label><span class="to-long">Ширина</span><span class="to-short">Ш</span><input type="number" min="0.5" max="60" step="0.1" value="3" data-ph-w>м</label>
+          <label><span class="to-long">Глубина</span><span class="to-short">Г</span><input type="number" min="0.5" max="60" step="0.1" value="4" data-ph-d>м</label>
+          <label class="to-ph-chk"><input type="checkbox" data-ph-kerb checked>Бордюр</label>
+        </div>
+        <div class="to-ph-row">
+          <span class="seg to-ph-seg"><button type="button" data-ph-brush="erase" aria-pressed="false" title="Закрасьте то, что стоит поверх плитки: машину, людей, кусты">Стереть</button><button type="button" data-ph-brush="restore" aria-pressed="false">Вернуть</button></span>
+          <label class="to-ph-rng" data-ph-bsw hidden>Кисть<input type="range" min="0.01" max="0.12" step="0.005" value="0.04" data-ph-bs></label>
+          <label class="to-ph-rng">Яркость<input type="range" min="0.5" max="1.6" step="0.05" value="1" data-ph-g></label>
+          <button type="button" class="tbtn" data-ph-orig title="Удерживайте, чтобы увидеть исходное фото">Было</button>
+          <label class="tbtn">Другое фото<input type="file" accept="image/*" data-ph-file hidden></label>
+        </div>
       </div>
     </div>
     <div class="to-hint" data-hint hidden></div>

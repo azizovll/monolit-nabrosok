@@ -663,7 +663,7 @@ function updateHandles() {
   if (mode === 'plan') { const s = handleSize(); for (const [x, zz] of [[z.x1, z.z1], [z.x2, z.z1], [z.x1, z.z2], [z.x2, z.z2]]) { const h = new THREE.Mesh(new THREE.BoxGeometry(s, .05, s), HANDLE_M); h.position.set(x, .08, zz); h.renderOrder = 11; handlesG.add(h); } }
   redraw(false);
 }
-function select(s) { sel = s; updateHandles(); if (s && s.kind === 'zone') openTab('zone'); else if (s && s.kind === 'house') openTab('house'); else renderPanel(); }
+function select(s) { sel = s; if (s && s.kind === 'zone') phAssign(s.id); updateHandles(); if (s && s.kind === 'zone') openTab('zone'); else if (s && s.kind === 'house') openTab('house'); else renderPanel(); }
 
 /* ---------- мышь и касания ---------- */
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -972,7 +972,7 @@ function projectText() {
   return [`Дом: ${HOUSES[h.type].name}; фасад: ${FACADE_MATS[h.facade.m]} ${nameOf(h.facade.m === 'brick' ? BRICK_COLORS : h.facade.m === 'wood' ? WOOD_COLORS : FACADE_COLORS, h.facade.c)}; крыша: ${ROOF_MATS[h.roof.m]} ${nameOf(RAL, h.roof.c)}`,
     `Забор: ${FENCE_TYPES[S.fence.t]}${S.fence.t !== 'none' ? ' ' + nameOf(FENCE_COLORS, S.fence.c) : ''}; участок ${S.plot.w}×${S.plot.d} м`, '',
     ...rows.map(r => `${r.name}: ${r.what}${r.m2 ? `, ${r.a.toFixed(1)} м² (с запасом ${r.m2.toFixed(1)} м²${r.split ? '; ' + r.split : ''})` : `, ${r.pcs} шт`}${r.sum ? ', ≈ ' + fmt(r.sum) + ' ₽' : ''}`),
-    ...(PH.on && PH.img ? ['', `Картинка: примерка на фото клиента (${PH.zoneLabel}), размер на фото ${num(PH.w)}×${num(PH.d)} м`] : []),
+    ...(PH.on && PH.img ? ['', `Картинка: примерка на фото клиента (${phText()})`] : []),
     '', `Итого примерно: ${fmt(total)} ₽ без доставки`].join('\n');
 }
 function sendProject() {
@@ -985,36 +985,57 @@ function sendProject() {
 
 
 /* ---------- примерка на фото своего двора ---------- */
-const PH = { on: false, img: null, tex: null, pts: [[.18, .9], [.82, .9], [.7, .52], [.3, .52]], w: 3, d: 4, gain: 1, mean: .18, small: null, zoneLabel: '', box: null };
-const phUI = $('[data-photo-ui]'), phCanvas = $('[data-pc]'), phPoly = $('[data-ph-poly]'), phH = $$('[data-ph]');
-let phR = null, phMat = null, phScene, phCam, FLATN;
-const PH_FS = `uniform sampler2D photo, pave, paveN; uniform float hasPave, rot, mean, gain; uniform vec3 base; uniform mat3 Hi; uniform vec2 size, rep; varying vec2 vUv;
+/* до 4 площадок на фото; углы можно выводить за край кадра; кисть «стереть/вернуть» для предметов поверх плитки */
+const PH = { on: false, img: null, tex: null, small: null, quads: [], act: 0, gain: 1, brush: null, bs: .04, orig: false, guide: false, box: null, mask: null, maskTex: null };
+const phUI = $('[data-photo-ui]'), phCanvas = $('[data-pc]'), phSvg = $('[data-ph-svg]'), phH = $$('[data-ph]'), phCur = $('[data-ph-cur]'), phLoupe = $('[data-ph-loupe]');
+let phR = null, phScene, phCam, phPhoto, FLATN; const phQM = [];
+const PH_VS = 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }';
+const PH_FS0 = `uniform sampler2D photo; varying vec2 vUv; void main() { gl_FragColor = vec4(texture2D(photo, vUv).rgb, 1.);
+  #include <colorspace_fragment>
+}`;
+const PH_FS = `uniform sampler2D photo, pave, paveN, mask; uniform float hasPave, rot, mean, gain, kerb, guide; uniform vec3 base, wb; uniform mat3 Hi; uniform vec2 size, rep; varying vec2 vUv;
+float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 void main() {
-  vec3 col = texture2D(photo, vUv).rgb;
   vec3 q = Hi * vec3(vUv.x, 1. - vUv.y, 1.); vec2 st = q.xy / q.z;
   vec2 fw = fwidth(st); float e = min(min(st.x, 1. - st.x), min(st.y, 1. - st.y)), a = clamp(e / max(max(fw.x, fw.y), 1e-6) + .5, 0., 1.);
-  if (a > 0.) {
-    vec2 m = vec2(st.x * size.x, st.y * size.y); float c = cos(rot), s = sin(rot); vec2 t = vec2(c * m.x - s * m.y, s * m.x + c * m.y) * rep;
-    vec3 alb = mix(base, texture2D(pave, t).rgb, hasPave), n = normalize(texture2D(paveN, t).xyz * 2. - 1.);
-    float rel = clamp(.72 + .45 * dot(n, normalize(vec3(-.35, .45, .82))), .5, 1.15);
-    float lum = dot(texture2D(photo, vUv, 4.5).rgb, vec3(.2126, .7152, .0722));
-    float sh = mix(1., clamp(lum / max(mean, 1e-4), .25, 1.7), .8), g = clamp(mean / .2, .4, 1.5) * gain;
-    col = mix(col, alb * sh * g * rel, a);
+  a *= texture2D(mask, vUv).r; if (a <= .002) discard;
+  vec2 m = st * size; float em = min(min(m.x, size.x - m.x), min(m.y, size.y - m.y));
+  float lum = dot(texture2D(photo, vUv, 4.5).rgb, vec3(.2126, .7152, .0722));
+  float sh = mix(1., clamp(lum / max(mean, 1e-4), .25, 1.7), .8), g = clamp(mean / .2, .4, 1.5) * gain;
+  vec3 tint = mix(vec3(1.), wb, .55), col;
+  float kw = .1 * kerb;
+  if (em < kw) {   // бордюр 10 см: светлый бетон, шов у плитки
+    float n = hash(floor(m * 60.)) * .08 + hash(floor(m * 7.)) * .06;
+    col = vec3(.36, .35, .33) * (.94 + n) * (em > kw - .012 ? .55 : 1.) * (em < .012 ? .8 : 1.);
+  } else {
+    float c = cos(rot), s = sin(rot); vec2 t = vec2(c * m.x - s * m.y, s * m.x + c * m.y) * rep;
+    vec3 alb = mix(base, texture2D(pave, t, .4).rgb, hasPave), nn = normalize(texture2D(paveN, t).xyz * 2. - 1.);
+    float rel = clamp(.72 + .45 * dot(nn, normalize(vec3(-.35, .45, .82))), .5, 1.15);
+    float ao = kerb > 0. ? mix(.8, 1., smoothstep(kw, kw + .07, em)) : mix(.85, 1., smoothstep(0., .05, em));
+    col = alb * rel * ao;
   }
-  gl_FragColor = vec4(col, 1.);
+  col *= sh * g * tint * (1. + (hash(gl_FragCoord.xy) - .5) * .05);
+  if (guide > 0.) { vec2 gm = abs(fract(m + .5) - .5) / max(fwidth(m), 1e-5); col = mix(col, vec3(1.), (1. - clamp(min(gm.x, gm.y), 0., 1.)) * .7); }
+  gl_FragColor = vec4(col, a);
   #include <colorspace_fragment>
 }`;
 function phInit() {
   if (phR) return true;
-  try { phR = new THREE.WebGLRenderer({ canvas: phCanvas, antialias: false }); } catch (e) { return false; }
+  try { phR = new THREE.WebGLRenderer({ canvas: phCanvas, antialias: false, alpha: false }); } catch (e) { return false; }
   phR.outputColorSpace = THREE.SRGBColorSpace;
   FLATN = new THREE.DataTexture(new Uint8Array([128, 128, 255, 255]), 1, 1); FLATN.needsUpdate = true;
-  phMat = new THREE.ShaderMaterial({ uniforms: { photo: { value: null }, pave: { value: FLATN }, paveN: { value: FLATN }, hasPave: { value: 0 }, rot: { value: 0 }, mean: { value: .18 }, gain: { value: 1 }, base: { value: new THREE.Color() }, Hi: { value: new THREE.Matrix3() }, size: { value: new THREE.Vector2(3, 4) }, rep: { value: new THREE.Vector2(1, 1) } },
-    vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }', fragmentShader: PH_FS, depthTest: false });
-  phScene = new THREE.Scene(); phCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); phScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), phMat));
+  phScene = new THREE.Scene(); phCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const geo = new THREE.PlaneGeometry(2, 2);
+  phPhoto = new THREE.Mesh(geo, new THREE.ShaderMaterial({ uniforms: { photo: { value: null } }, vertexShader: PH_VS, fragmentShader: PH_FS0, depthTest: false, depthWrite: false })); phPhoto.renderOrder = 0; phScene.add(phPhoto);
+  for (let i = 0; i < 4; i++) {
+    const mat = new THREE.ShaderMaterial({ uniforms: { photo: { value: null }, pave: { value: FLATN }, paveN: { value: FLATN }, mask: { value: FLATN }, hasPave: { value: 0 }, rot: { value: 0 }, mean: { value: .18 }, gain: { value: 1 }, kerb: { value: 1 }, guide: { value: 0 },
+      base: { value: new THREE.Color() }, wb: { value: new THREE.Vector3(1, 1, 1) }, Hi: { value: new THREE.Matrix3() }, size: { value: new THREE.Vector2(3, 4) }, rep: { value: new THREE.Vector2(1, 1) } },
+      vertexShader: PH_VS, fragmentShader: PH_FS, transparent: true, depthTest: false, depthWrite: false });
+    const me = new THREE.Mesh(geo, mat); me.renderOrder = i + 1; me.visible = false; phScene.add(me); phQM.push(me);
+  }
   return true;
 }
-/* единичный квадрат (u вдоль ближнего края, v вглубь) → четырёхугольник на фото; обратная матрица идёт в шейдер */
+/* единичный квадрат (u вдоль ближнего края, v вглубь) → четырёхугольник; координаты фото 0..1, за краем кадра тоже работают */
 function homography(p) {
   const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = p, dx1 = x1 - x2, dx2 = x3 - x2, dy1 = y1 - y2, dy2 = y3 - y2, sx = x0 - x1 + x2 - x3, sy = y0 - y1 + y2 - y3;
   let g = 0, h = 0; const den = dx1 * dy2 - dx2 * dy1; if (Math.abs(den) > 1e-12) { g = (sx * dy2 - dx2 * sy) / den; h = (dx1 * sy - sx * dy1) / den; }
@@ -1022,81 +1043,151 @@ function homography(p) {
 }
 const convex = p => { let sg = 0; for (let i = 0; i < 4; i++) { const a = p[i], b = p[(i + 1) % 4], c = p[(i + 2) % 4], cr = (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]); if (Math.abs(cr) < 1e-6) return false; if (sg && Math.sign(cr) !== sg) return false; sg = Math.sign(cr); } return true; };
 function inQuad(x, y, p) { let ins = false; for (let i = 0, j = 3; i < 4; j = i++) { const [xi, yi] = p[i], [xj, yj] = p[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) ins = !ins; } return ins; }
-function phMean() {   // средняя яркость земли под площадкой (линейная): по ней плитка подстраивается под освещение снимка
-  const sm = PH.small; if (!sm) return; let s = 0, n = 0; const lin = v => { v /= 255; return v <= .04045 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
-  for (let y = 0; y < sm.h; y++) for (let x = 0; x < sm.w; x++) if (inQuad((x + .5) / sm.w, (y + .5) / sm.h, PH.pts)) { const i = (y * sm.w + x) * 4; s += .2126 * lin(sm.d[i]) + .7152 * lin(sm.d[i + 1]) + .0722 * lin(sm.d[i + 2]); n++; }
-  PH.mean = n ? s / n : .18;
+const PQ = () => PH.quads[PH.act];
+function phMean(q) {   // яркость и оттенок земли под площадкой (линейные): плитка подстраивается под свет и баланс белого снимка
+  const sm = PH.small; if (!sm) return; let r = 0, g = 0, b = 0, n = 0; const lin = v => { v /= 255; return v <= .04045 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
+  for (let y = 0; y < sm.h; y++) for (let x = 0; x < sm.w; x++) if (inQuad((x + .5) / sm.w, (y + .5) / sm.h, q.pts)) { const i = (y * sm.w + x) * 4; r += lin(sm.d[i]); g += lin(sm.d[i + 1]); b += lin(sm.d[i + 2]); n++; }
+  if (!n) { q.mean = .18; q.cast = [1, 1, 1]; return; }
+  r /= n; g /= n; b /= n; q.mean = .2126 * r + .7152 * g + .0722 * b; q.cast = PH.cast || [1, 1, 1];
 }
-function phZone() { const z = sel && sel.kind === 'zone' && S.zones.find(q => q.id === sel.id); return z || S.zones.find(q => q.kind === 'pave') || S.zones[0] || null; }
+function phZoneOf(q) { return S.zones.find(z => z.id === q.zone) || (sel && sel.kind === 'zone' && S.zones.find(z => z.id === sel.id)) || S.zones.find(z => z.kind === 'pave') || S.zones[0] || null; }
+function zLabel(z) { return !z ? '' : z.kind === 'grid' ? 'газонная решётка' : `«${(FORMS[z.form] || {}).name}» ${zColors(z)}, ${PATTERN_NAMES[z.pat].toLowerCase()}`; }
 function phRender() {
   phDirty = false; if (!PH.img || !phR || !PH.box) return;
-  const z = phZone(), u = phMat.uniforms;
-  if (z) { const m = zoneMat(z); u.hasPave.value = m.map ? 1 : 0; u.pave.value = m.map || FLATN; u.paveN.value = m.normalMap || FLATN; u.base.value.copy(m.color);
-    if (m.map) u.rep.value.copy(m.map.repeat); else u.rep.value.set(1, 1); u.rot.value = m.map ? m.map.rotation : 0;
-    PH.zoneLabel = z.kind === 'grid' ? 'газонная решётка' : `«${(FORMS[z.form] || {}).name}» ${zColors(z)}, ${PATTERN_NAMES[z.pat].toLowerCase()}`; }
-  u.photo.value = PH.tex; u.mean.value = PH.mean; u.gain.value = PH.gain; u.size.value.set(PH.w, PH.d);
-  u.Hi.value.copy(homography(PH.pts)).invert();
+  phPhoto.material.uniforms.photo.value = PH.tex;
+  phQM.forEach((me, i) => {
+    const q = PH.quads[i]; me.visible = !!q && !PH.orig; if (!me.visible) return;
+    if (i === PH.act && sel && sel.kind === 'zone') q.zone = sel.id;   // активная площадка на фото = площадка, выбранная в панели
+    const u = me.material.uniforms, z = phZoneOf(q);
+    if (z) { const m = zoneMat(z); u.hasPave.value = m.map ? 1 : 0; u.pave.value = m.map || FLATN; u.paveN.value = m.normalMap || FLATN; u.base.value.copy(m.color);
+      if (m.map) u.rep.value.copy(m.map.repeat); else u.rep.value.set(1, 1); u.rot.value = m.map ? m.map.rotation : 0; }
+    u.photo.value = PH.tex; u.mask.value = PH.maskTex; u.mean.value = q.mean; u.wb.value.set(...q.cast); u.gain.value = PH.gain; u.kerb.value = q.kerb ? 1 : 0;
+    u.guide.value = PH.guide && i === PH.act ? 1 : 0; u.size.value.set(q.w, q.d); u.Hi.value.copy(homography(q.pts)).invert();
+  });
   phR.render(phScene, phCam);
 }
-function phLayout() {   // фото вписывается между панелью инструментов и стрелками цвета
+function phLayout() {   // фото вписывается между панелями сверху и стрелками снизу
   if (!PH.on || !PH.img || !phR) return;
   const r = phUI.getBoundingClientRect(); if (!r.width || !r.height) return;
   const tools = $('.to-tools'), bar = $('[data-ph-bar]'), tb = tools.offsetTop + tools.offsetHeight + 8; bar.style.top = tb + 'px';
   const top = bar.hidden ? tb : tb + bar.offsetHeight + 8, bot = MOBILE ? 88 : 100, aw = r.width - 16, ah = Math.max(80, r.height - top - bot);
   const k = Math.min(aw / PH.img.width, ah / PH.img.height), w = Math.round(PH.img.width * k), h = Math.round(PH.img.height * k), x = Math.round((r.width - w) / 2), y = Math.round(top + (ah - h) / 2);
-  Object.assign(phCanvas.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+  Object.assign(phCanvas.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px', right: 'auto', bottom: 'auto' });
   const pr = Math.min(devicePixelRatio || 1, 2, 2400 / Math.max(w, h)); phR.setPixelRatio(pr); phR.setSize(w, h, false);
-  PH.box = { x, y, w, h }; phHandles(); phDirty = true;
+  PH.box = { x, y, w, h, W: r.width, H: r.height }; phHandles(); phDirty = true;
 }
+const phX = p => PH.box.x + p[0] * PH.box.w, phY = p => PH.box.y + p[1] * PH.box.h;
 function phHandles() {
-  const b = PH.box; if (!b) return;
-  PH.pts.forEach((p, i) => { phH[i].style.left = (b.x + p[0] * b.w) + 'px'; phH[i].style.top = (b.y + p[1] * b.h) + 'px'; });
-  phPoly.setAttribute('points', PH.pts.map(p => (b.x + p[0] * b.w) + ',' + (b.y + p[1] * b.h)).join(' '));
+  if (!PH.box) return; const q = PQ();
+  phH.forEach((h, i) => { h.hidden = !q || !!PH.brush; if (q) { h.style.left = phX(q.pts[i]) + 'px'; h.style.top = phY(q.pts[i]) + 'px'; } });
+  phSvg.innerHTML = PH.quads.map((qq, i) => { const cx = qq.pts.reduce((s, p) => s + phX(p), 0) / 4, cy = qq.pts.reduce((s, p) => s + phY(p), 0) / 4;
+    return `<polygon class="${i === PH.act ? 'on' : ''}" points="${qq.pts.map(p => phX(p) + ',' + phY(p)).join(' ')}"></polygon>${PH.quads.length > 1 ? `<text x="${cx}" y="${cy}">${i + 1}</text>` : ''}`; }).join('');
 }
-function phShow(has) { $('[data-ph-empty]').hidden = has; $('[data-ph-bar]').hidden = !has; phCanvas.hidden = !has; $('[data-ph-svg]').style.display = has ? '' : 'none'; phH.forEach(h => h.hidden = !has); }
+function phBar() {
+  const q = PQ(); if (!q) return;
+  $('[data-ph-quads]').innerHTML = PH.quads.map((_, i) => `<button type="button" data-phq="${i}" aria-pressed="${i === PH.act}" title="Площадка ${i + 1}">${i + 1}</button>`).join('') +
+    (PH.quads.length < 4 ? '<button type="button" data-phadd title="Добавить площадку на фото">+</button>' : '') + (PH.quads.length > 1 ? '<button type="button" class="to-x" data-phdel title="Удалить площадку">×</button>' : '');
+  $('[data-ph-w]').value = q.w; $('[data-ph-d]').value = q.d; $('[data-ph-kerb]').checked = q.kerb;
+  $$('[data-ph-brush]').forEach(b => b.setAttribute('aria-pressed', b.dataset.phBrush === PH.brush)); $('[data-ph-bsw]').hidden = !PH.brush; phUI.classList.toggle('brush', !!PH.brush);
+}
+function phActivate(i) { PH.act = i; const q = PQ(), z = phZoneOf(q); phBar(); phHandles(); if (z && !(sel && sel.id === z.id)) { sel = { kind: 'zone', id: z.id }; updateHandles(); openTab('zone'); } phDirty = true; }
+function phAssign(id) { const q = PH.on && PQ(); if (q && q.zone !== id) { q.zone = id; phDirty = true; } }
+function phShow(has) { $('[data-ph-empty]').hidden = has; $('[data-ph-bar]').hidden = !has; phCanvas.hidden = !has; phSvg.style.display = has ? '' : 'none'; phH.forEach(h => h.hidden = !has); }
 function phOpen() {
   if (!phInit()) { hint('Браузер не поддерживает эту функцию', 3000); return; }
   PH.on = true; phUI.hidden = false; view.classList.add('ph'); $('[data-tryon]').classList.add('to-ph'); $('[data-photo]').setAttribute('aria-pressed', 'true'); $$('[data-3d-only],[data-plan-only]').forEach(e => e.hidden = true);
-  phShow(!!PH.img); phLayout(); renderSwap();
+  phShow(!!PH.img); if (PH.img) { phBar(); phLayout(); } renderSwap();
   if (PH.img) hint('Меняйте цвет стрелками внизу или во вкладке «Плитка»', 3500); else hint('');
 }
-function phClose() { PH.on = false; phUI.hidden = true; view.classList.remove('ph'); $('[data-tryon]').classList.remove('to-ph'); $('[data-photo]').setAttribute('aria-pressed', 'false'); $$('[data-3d-only]').forEach(e => e.hidden = mode !== '3d'); $$('[data-plan-only]').forEach(e => e.hidden = mode !== 'plan'); redraw(false); }
+function phClose() { PH.on = false; PH.brush = null; phUI.hidden = true; view.classList.remove('ph'); $('[data-tryon]').classList.remove('to-ph'); $('[data-photo]').setAttribute('aria-pressed', 'false'); $$('[data-3d-only]').forEach(e => e.hidden = mode !== '3d'); $$('[data-plan-only]').forEach(e => e.hidden = mode !== 'plan'); redraw(false); }
+function newQuad(i, portrait) {
+  const base = portrait ? [[.12, .9], [.88, .9], [.72, .58], [.28, .58]] : [[.2, .92], [.8, .92], [.68, .55], [.32, .55]];
+  const s = i ? .55 : 1, cx = .5 + (i === 1 ? -.18 : i === 2 ? .18 : 0), cy = i ? .74 : .5;
+  const pts = i ? base.map(([x, y]) => [cx + (x - .5) * s, cy + (y - .73) * s]) : base;
+  const used = PH.quads.map(q => q.zone), z = i ? (S.zones.find(q => q.kind === 'pave' && !used.includes(q.id)) || S.zones.find(q => q.kind === 'pave')) : ((sel && sel.kind === 'zone' && S.zones.find(q => q.id === sel.id)) || S.zones.find(q => q.kind === 'pave'));
+  const q = { pts, w: i ? 2 : 3, d: i ? 2 : 4, kerb: true, zone: z ? z.id : 0, mean: .18, cast: [1, 1, 1] }; phMean(q); return q;
+}
 function phLoad(file) {
   if (!file || !/^image\//.test(file.type)) { hint('Нужна фотография: JPG, PNG или HEIC', 3000); return; }
   const url = URL.createObjectURL(file), img = new Image();
   img.onload = () => {
     const k = Math.min(1, 2048 / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
     c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-    const sw = 96, sh = Math.max(1, Math.round(96 * c.height / c.width)), sc = document.createElement('canvas'); sc.width = sw; sc.height = sh; const sx = sc.getContext('2d'); sx.drawImage(c, 0, 0, sw, sh);
-    PH.small = { w: sw, h: sh, d: sx.getImageData(0, 0, sw, sh).data };
+    const sw = 96, sh = Math.max(1, Math.round(96 * c.height / c.width)), sc = document.createElement('canvas'); sc.width = sw; sc.height = sh; const scx = sc.getContext('2d'); scx.drawImage(c, 0, 0, sw, sh);
+    PH.small = { w: sw, h: sh, d: scx.getImageData(0, 0, sw, sh).data };
+    { const d = PH.small.d, a = [0, 0, 0]; for (let i = 0; i < d.length; i += 4) for (let k = 0; k < 3; k++) a[k] += Math.pow(d[i + k] / 255, 2.2);   // баланс белого по всему снимку (серый мир), не по траве под площадкой
+      const m = (a[0] + a[1] + a[2]) / 3; PH.cast = a.map(v => Math.max(.88, Math.min(1.12, v / Math.max(m, 1e-4)))); }
     if (PH.tex) PH.tex.dispose(); PH.tex = new THREE.CanvasTexture(c); PH.tex.colorSpace = THREE.SRGBColorSpace; PH.tex.anisotropy = 4; PH.img = c;
-    PH.pts = c.height > c.width ? [[.12, .9], [.88, .9], [.72, .58], [.28, .58]] : [[.2, .92], [.8, .92], [.68, .55], [.32, .55]];
-    phMean(); phShow(true); phLayout();
-    hint(MOBILE ? 'Потяните углы к краям площадки и укажите её размеры' : 'Потяните 4 угла к краям места под плитку и укажите его размеры, чтобы камни были в масштабе', 6000);
+    const mw = 1024, mh = Math.max(1, Math.round(1024 * c.height / c.width)); PH.mask = document.createElement('canvas'); PH.mask.width = mw; PH.mask.height = mh;
+    const mx = PH.mask.getContext('2d'); mx.fillStyle = '#fff'; mx.fillRect(0, 0, mw, mh); if (PH.maskTex) PH.maskTex.dispose(); PH.maskTex = new THREE.CanvasTexture(PH.mask);
+    PH.quads = [newQuad(0, c.height > c.width)]; PH.act = 0; PH.brush = null;
+    phShow(true); phBar(); phLayout();
+    hint(MOBILE ? 'Потяните углы к краям площадки, можно и за край фото' : 'Потяните 4 угла к краям места под плитку, можно и за край фото. Укажите размеры, чтобы камни были в масштабе', 6500);
   };
   img.onerror = () => { URL.revokeObjectURL(url); hint('Не удалось открыть фото. Попробуйте JPG или PNG', 3500); };
   img.src = url;
 }
 $('[data-photo]').addEventListener('click', () => PH.on ? phClose() : phOpen());
 $$('[data-ph-file]').forEach(i => i.addEventListener('change', () => { phLoad(i.files[0]); i.value = ''; }));
-$('[data-ph-w]').addEventListener('input', e => { PH.w = Math.max(.5, parseFloat(e.target.value) || 3); phDirty = true; });
-$('[data-ph-d]').addEventListener('input', e => { PH.d = Math.max(.5, parseFloat(e.target.value) || 4); phDirty = true; });
+$('[data-ph-w]').addEventListener('input', e => { const q = PQ(); if (q) { q.w = Math.max(.5, parseFloat(e.target.value) || 3); phDirty = true; } });
+$('[data-ph-d]').addEventListener('input', e => { const q = PQ(); if (q) { q.d = Math.max(.5, parseFloat(e.target.value) || 4); phDirty = true; } });
+$('[data-ph-kerb]').addEventListener('change', e => { const q = PQ(); if (q) { q.kerb = e.target.checked; phDirty = true; } });
 $('[data-ph-g]').addEventListener('input', e => { PH.gain = +e.target.value; phDirty = true; });
+$('[data-ph-bs]').addEventListener('input', e => { PH.bs = +e.target.value; });
+$('[data-ph-bar]').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return; const d = t.dataset;
+  if (d.phq) phActivate(+d.phq);
+  else if ('phadd' in d && PH.quads.length < 4) { PH.quads.push(newQuad(PH.quads.length, PH.img.height > PH.img.width)); phActivate(PH.quads.length - 1); const nz = phZoneOf(PQ()); hint(`Площадка ${PH.quads.length} на фото взяла плитку «${nz ? zoneName(nz, S.zones.indexOf(nz)) : ''}». Меняйте её во вкладке «Плитка»`, 4500); }
+  else if ('phdel' in d && PH.quads.length > 1) { PH.quads.splice(PH.act, 1); phActivate(Math.max(0, PH.act - 1)); }
+  else if (d.phBrush) { PH.brush = PH.brush === d.phBrush ? null : d.phBrush; phBar(); phHandles(); if (PH.brush === 'erase') hint('Закрасьте то, что должно остаться поверх плитки: машину, людей, кусты', 4000); }
+});
+const orig = $('[data-ph-orig]'), setOrig = v => { PH.orig = v; orig.setAttribute('aria-pressed', v); phDirty = true; };
+orig.addEventListener('pointerdown', e => { e.preventDefault(); setOrig(true); }); ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => orig.addEventListener(t, () => setOrig(false)));
+orig.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') setOrig(true); }); orig.addEventListener('keyup', () => setOrig(false));
 new ResizeObserver(() => phLayout()).observe(phUI);
-/* перетаскивание углов и всей площадки целиком */
+
+/* мышь и пальцы: углы, площадка целиком, кисть */
 let phDrag = null;
 const phPt = e => { const r = phCanvas.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; };
-phH.forEach((h, i) => h.addEventListener('pointerdown', e => { e.preventDefault(); h.setPointerCapture(e.pointerId); phDrag = { i }; }));
-phCanvas.addEventListener('pointerdown', e => { const p = phPt(e); if (!inQuad(p[0], p[1], PH.pts)) return; e.preventDefault(); phCanvas.setPointerCapture(e.pointerId); phDrag = { all: true, p0: p, pts0: PH.pts.map(q => q.slice()) }; });
-phUI.addEventListener('pointermove', e => {
-  if (!phDrag) return; const p = phPt(e), cl = v => Math.max(0, Math.min(1, v));
-  let next;
-  if (phDrag.all) { let dx = p[0] - phDrag.p0[0], dy = p[1] - phDrag.p0[1]; const xs = phDrag.pts0.map(q => q[0]), ys = phDrag.pts0.map(q => q[1]);
-    dx = Math.max(-Math.min(...xs), Math.min(1 - Math.max(...xs), dx)); dy = Math.max(-Math.min(...ys), Math.min(1 - Math.max(...ys), dy)); next = phDrag.pts0.map(q => [q[0] + dx, q[1] + dy]); }
-  else { next = PH.pts.map(q => q.slice()); next[phDrag.i] = [cl(p[0]), cl(p[1])]; }
-  if (!convex(next)) return; PH.pts = next; phHandles(); phDirty = true;
+function phLim() { const b = PH.box, pad = 12; return { x0: (pad - b.x) / b.w, x1: (b.W - pad - b.x) / b.w, y0: (pad - b.y) / b.h, y1: (b.H - pad - b.y) / b.h }; }   // углы можно уводить за кадр, но не за край экрана
+function phPaint(e) {
+  const p = phPt(e), mx = PH.mask.getContext('2d'), r = PH.bs * PH.mask.width;
+  mx.filter = 'blur(' + Math.max(1, r * .18).toFixed(1) + 'px)';   // мягкий край кисти
+  mx.fillStyle = PH.brush === 'erase' ? '#000' : '#fff'; mx.beginPath();
+  if (phDrag.last) { mx.lineCap = 'round'; mx.lineWidth = r * 2; mx.strokeStyle = mx.fillStyle; mx.moveTo(phDrag.last[0] * PH.mask.width, phDrag.last[1] * PH.mask.height); mx.lineTo(p[0] * PH.mask.width, p[1] * PH.mask.height); mx.stroke(); }
+  else { mx.arc(p[0] * PH.mask.width, p[1] * PH.mask.height, r, 0, Math.PI * 2); mx.fill(); }
+  mx.filter = 'none'; phDrag.last = p; PH.maskTex.needsUpdate = true; phDirty = true;
+}
+function loupe(e, show) {   // лупа на телефоне: палец закрывает угол, поэтому показываем его увеличенным сверху
+  if (!MOBILE || !show) { phLoupe.hidden = true; return; }
+  const p = phPt(e), x = phLoupe.getContext('2d'), S2 = 240, zoom = 3, src = PH.img, sw = S2 / zoom * src.width / PH.box.w / devicePixelRatio * 1.0;
+  x.fillStyle = '#24201f'; x.fillRect(0, 0, S2, S2); x.drawImage(src, p[0] * src.width - sw / 2, p[1] * src.height - sw / 2, sw, sw, 0, 0, S2, S2);
+  x.strokeStyle = '#fff'; x.lineWidth = 2; x.beginPath(); x.moveTo(S2 / 2 - 14, S2 / 2); x.lineTo(S2 / 2 + 14, S2 / 2); x.moveTo(S2 / 2, S2 / 2 - 14); x.lineTo(S2 / 2, S2 / 2 + 14); x.stroke();
+  const r = phUI.getBoundingClientRect(), lx = e.clientX - r.left, ly = e.clientY - r.top;
+  phLoupe.style.left = Math.min(r.width - 128, Math.max(8, lx - 60)) + 'px'; phLoupe.style.top = Math.max(8, ly - 150) + 'px'; phLoupe.hidden = false;
+}
+phH.forEach((h, i) => h.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); h.setPointerCapture(e.pointerId); phDrag = { i }; PH.guide = true; phDirty = true; loupe(e, true); }));
+phUI.addEventListener('pointerdown', e => {
+  if (!PH.img || e.target.closest('[data-ph-bar],[data-ph-empty],[data-ph]')) return;
+  const p = phPt(e);
+  if (PH.brush) { e.preventDefault(); phUI.setPointerCapture(e.pointerId); phDrag = { brush: true }; phPaint(e); return; }
+  let hit = -1; for (let i = PH.quads.length - 1; i >= 0; i--) if (inQuad(p[0], p[1], PH.quads[i].pts)) { hit = i; break; }
+  if (hit < 0) return; e.preventDefault(); if (hit !== PH.act) phActivate(hit);
+  phUI.setPointerCapture(e.pointerId); phDrag = { all: true, p0: p, pts0: PQ().pts.map(q => q.slice()) }; PH.guide = true; phDirty = true;
 });
-addEventListener('pointerup', () => { if (phDrag) { phDrag = null; phMean(); phDirty = true; } });
+phUI.addEventListener('pointermove', e => {
+  if (PH.brush && PH.box) { const r = phUI.getBoundingClientRect(), d = PH.bs * 2 * PH.box.w; phCur.hidden = false; Object.assign(phCur.style, { left: (e.clientX - r.left) + 'px', top: (e.clientY - r.top) + 'px', width: d + 'px', height: d + 'px' }); }
+  if (!phDrag) return;
+  if (phDrag.brush) { phPaint(e); return; }
+  const p = phPt(e), L = phLim(), q = PQ(); let next;
+  if (phDrag.all) { let dx = p[0] - phDrag.p0[0], dy = p[1] - phDrag.p0[1]; const xs = phDrag.pts0.map(v => v[0]), ys = phDrag.pts0.map(v => v[1]);
+    dx = Math.max(L.x0 - Math.min(...xs), Math.min(L.x1 - Math.max(...xs), dx)); dy = Math.max(L.y0 - Math.min(...ys), Math.min(L.y1 - Math.max(...ys), dy)); next = phDrag.pts0.map(v => [v[0] + dx, v[1] + dy]); }
+  else { next = q.pts.map(v => v.slice()); next[phDrag.i] = [Math.max(L.x0, Math.min(L.x1, p[0])), Math.max(L.y0, Math.min(L.y1, p[1]))]; loupe(e, true); }
+  if (!convex(next)) return; q.pts = next; phHandles(); phDirty = true;
+});
+phUI.addEventListener('pointerleave', () => { phCur.hidden = true; });
+addEventListener('pointerup', () => { if (phDrag) { const q = PQ(); phDrag = null; PH.guide = false; loupe(null, false); if (q) phMean(q); phDirty = true; } });
+function phText() { return PH.quads.map((q, i) => `площадка ${i + 1}: ${num(q.w)}×${num(q.d)} м, ${zLabel(phZoneOf(q))}${q.kerb ? ', с бордюром' : ''}`).join('; '); }
 
 /* ---------- цикл отрисовки ---------- */
 let started = false, PRt = { last: 0, sum: 0, n: 0, good: 0, ceil: 9 }, fi = 0, half = false; const VS = [];
