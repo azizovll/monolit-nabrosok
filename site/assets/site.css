@@ -634,6 +634,6 @@ a,button,label,summary,input,select,[role=tab]{touch-action:manipulation;-webkit
 @media(max-width:1180px){
   .menu{bottom:0;padding-bottom:calc(20px + env(safe-area-inset-bottom));overscroll-behavior:contain}
   body.menu-open .mbar{display:none}
-  .menu .menu-call{display:flex;gap:8px;margin-top:18px}.menu .menu-call .btn{flex:1;font-size:16px;padding:14px 10px;border-bottom:0}
+  .menu .menu-call{display:flex;gap:8px;margin-top:18px}.menu .menu-call .btn{flex:1;font-size:16px;font-weight:800;padding:14px 10px;border-radius:14px;justify-content:center}.menu .menu-call .btn-brand{color:#fff;border:0}.menu .menu-call .btn-line{color:var(--ink);border:2px solid var(--ink)}
 }
 .menu-call{display:none}
