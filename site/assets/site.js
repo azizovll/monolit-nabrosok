@@ -25,8 +25,12 @@
     var open = burger.getAttribute('aria-expanded') !== 'true';
     document.documentElement.style.setProperty('--hh', hdr.getBoundingClientRect().bottom + 'px');
     burger.setAttribute('aria-expanded', open); menu.classList.toggle('open', open);
-    document.body.style.overflow = open ? 'hidden' : '';
+    document.body.style.overflow = open ? 'hidden' : ''; document.body.classList.toggle('menu-open', open);
   });
+  function closeMenu() { if (burger && burger.getAttribute('aria-expanded') === 'true') burger.click(); }
+  if (menu) menu.addEventListener('click', function (e) { if (e.target.closest('a')) closeMenu(); });
+  addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
+  addEventListener('pageshow', function () { if (burger) { burger.setAttribute('aria-expanded', 'false'); menu.classList.remove('open'); document.body.style.overflow = ''; document.body.classList.remove('menu-open'); } });
 
   /* маска телефона */
   function maskPhone(inp) {

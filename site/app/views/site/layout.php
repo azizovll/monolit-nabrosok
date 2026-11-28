@@ -47,6 +47,7 @@ $draft = setting('noindex', '1') === '1';
         <a href="<?= e(url($u)) ?>"<?= str_starts_with($cur, $u) ? ' aria-current="page"' : '' ?>><?= e($label) ?></a>
       <?php endforeach; ?>
       <a class="menu-extra" href="<?= e(url('o-kompanii/')) ?>">О компании</a>
+      <div class="menu-call"><a class="btn btn-line" href="tel:<?= e(setting('phone_tel')) ?>" data-goal="phone">Позвонить</a><a class="btn btn-brand" href="<?= e(url('raschet/')) ?>">Рассчитать</a></div>
     </nav>
     <div class="hdr-r">
       <a class="hdr-phone" href="tel:<?= e($tel) ?>" data-goal="phone"><b><?= e(setting('phone')) ?></b><small><i></i><?= e(setting('hours')) ?></small></a>
