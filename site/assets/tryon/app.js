@@ -1294,7 +1294,7 @@ renderer.setAnimationLoop(t => {
 });
 controls.addEventListener('change', () => { if (mode === 'plan' && sel) { clearTimeout(controls._h); controls._h = setTimeout(updateHandles, 120); } });
 if (location.search.includes('debug')) window.__toPH = Object.assign(PH, { refresh() { phMean(PQ()); phBar(); phHandles(); phDirty = true; } });
-if (location.search.includes('debug')) window.__to = { THREE, scene, camera, controls, renderer, get S() { return S; }, setMode, select, buildZones, calc, zoneMeshes, ZMAT };
+if (location.search.includes('debug')) window.__to = { THREE, scene, camera, controls, renderer, get S() { return S; }, setMode, select, buildZones, rebuildAll, calc, zoneMeshes, ZMAT };
 
 /* ---------- старт ---------- */
 resize(); rebuildAll(); cam3d(true); renderPanel(); commit();
